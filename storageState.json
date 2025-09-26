@@ -1,0 +1,61 @@
+{
+  "cookies": [
+    {
+      "name": "vercel-experiment-uuid",
+      "value": "OHM52syAcz1XQo6d61YTJ",
+      "domain": "vercel.live",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://thought-partner-env-staging-ai-leadership.vercel.app",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "otp-verified-user",
+      "value": "a84fd471-1309-44f7-a680-c7a53c04bf64",
+      "domain": "thought-partner-env-staging-ai-leadership.vercel.app",
+      "path": "/",
+      "expires": 1758125292.647188,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__Secure-authjs.callback-url",
+      "value": "https%3A%2F%2Fthought-partner-env-staging-ai-leadership.vercel.app%2F",
+      "domain": "thought-partner-env-staging-ai-leadership.vercel.app",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__Secure-authjs.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiTG9HQXhnSGd2MGgxcV9KT2ltMHpQN1RFYk5qOTB6RDduelpQbUVNVGYzLWM1UHg0emNuV0NZTVZhUkp2b1hjQzBOWnRIaWJIZXhydEhZbExSWEM3NVEifQ..T83dQlYhiWTKmc3a1RwgGQ.1e58qaMiI_uVr5CNKTMJWM-R1zWS33u3Ar1xlsR2B4vUuDXHSJACiudVktkZ0wLvFIyHJBMc1JLRNIY7BCBWs--1OB_Xe112pHSYWq0HLJshC-0E-W2JLZ-d9JTW5RzindyThoK74Z3MCA_7FrGeT25_Zn5JjXCKay8cKdUo0Qoo9grb7WKLZRI2eZmxVFRclpN7fM4uvs6zg5myPgjQ-vFJjfGvcreYw83T-9Z1gj2SLWDJE21jHh21ftviKEgzqQ9SJbjKx94WJ55Z-1EIru2IhfPRgmaRM24e8jdObUL4CCCevWnUhBagvd77OAFO1fYq3sJYKZmgXaZy-QFAPA.hVDcXMKsGkSK7JSnUWpaoDhUEunYhhFzkVUg8rNSltE",
+      "domain": "thought-partner-env-staging-ai-leadership.vercel.app",
+      "path": "/",
+      "expires": 1760716692.647403,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://vercel.live",
+      "localStorage": [
+        {
+          "name": "vid-https://thought-partner-env-staging-ai-leadership.vercel.app",
+          "value": "\"17581246875160.6365188462269028\""
+        },
+        {
+          "name": "vercel-toolbar-experiment-uuid-https://thought-partner-env-staging-ai-leadership.vercel.app",
+          "value": "\"OHM52syAcz1XQo6d61YTJ\""
+        }
+      ]
+    }
+  ]
+}
