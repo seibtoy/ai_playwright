@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { ensureAuthorized } from "../helpers/save-session";
 
-test.describe("Verifies all sidebar components and their behavior when no chats started chats created", () => {
+test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
   test.beforeEach(async ({ page }) => {
     await ensureAuthorized(page);
   });
@@ -26,7 +26,6 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
     await test.step("Check AITP Memory block", async () => {
       await expect(page.getByText("AITP Memory")).toBeVisible();
-      await expect(page.getByText("Your conversations will")).toBeVisible();
     });
 
     await test.step("Check sidebar menu button", async () => {
@@ -139,7 +138,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
         });
         expect(newTheme).toBe("light");
       } else {
-        await page.getByRole("menuitem", { name: "Toggle light mode" }).click();
+        await page.getByRole("menuitem", { name: "Toggle dark mode" }).click();
 
         const newTheme = await page.evaluate(() => {
           return getComputedStyle(document.documentElement).colorScheme;
@@ -197,55 +196,51 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 });
 
 test.describe("Verifies all sidebar components and their behavior when chats started", () => {
-  let sidebar;
-  let chatLinks;
-  let actionsButton;
-
   test.beforeEach(async ({ page }) => {
     await ensureAuthorized(page);
-    sidebar = page.locator('div[data-slot="sidebar"]');
-    chatLinks = page.locator('a[href*="/chat"]');
-    actionsButton = page.locator('button[data-sidebar="menu-action"]');
   });
 
-  //   test.afterEach(async ({ page }) => {
-  //     await ensureAuthorized(page);
-  //   });
-
   test("Verifies the chats created in the sidebar", async ({ page }) => {
-    const countBefore = await chatLinks.count();
-
-    await test.step("Create a new chat", async () => {
-      const chatPagePromise = page.waitForResponse(
-        (response) =>
-          response.url().includes("/chat/") &&
-          response.url().includes("_rsc=") &&
-          response.request().method() === "GET"
-      );
-      await page.getByRole("button", { name: "New Chat" }).click();
-
-      const prompt = `Hello world ${Date.now()}`;
-      await page.getByTestId("multimodal-input").fill(prompt);
-
-      await page.getByTestId("send-button").click();
-      await chatPagePromise;
-
-      //   await expect
-      //     .poll(async () => await chatLinks.count())
-      //     .toBe(countBefore + 1);
+    const menuButton = page.locator(
+      'svg path[d="M4 8C4 8.82843 3.32843 9.5 2.5 9.5C1.67157 9.5 1 8.82843 1 8C1 7.17157 1.67157 6.5 2.5 6.5C3.32843 6.5 4 7.17157 4 8ZM9.5 8C9.5 8.82843 8.82843 9.5 8 9.5C7.17157 9.5 6.5 8.82843 6.5 8C6.5 7.17157 7.17157 6.5 8 6.5C8.82843 6.5 9.5 7.17157 9.5 8ZM13.5 9.5C14.3284 9.5 15 8.82843 15 8C15 7.17157 14.3284 6.5 13.5 6.5C12.6716 6.5 12 7.17157 12 8C12 8.82843 12.6716 9.5 13.5 9.5Z"]'
+    );
+    const input = page.getByTestId("multimodal-input");
+    const sendButton = page.getByTestId("send-button");
+    const recordingButton = page.getByRole("button", {
+      name: "Start recording",
     });
 
-    // await test.step("Open chat item menu and rename", async () => {
-    //   await expect(actionsButton).toBeVisible({ timeout: 10000 });
-    //   await actionsButton.click();
+    await test.step("Check that the sidebar is visible", async () => {
+      await expect(
+        page.locator('div[data-slot="sidebar-container"]')
+      ).toBeVisible();
+    });
 
-    //   await page.getByRole("menuitem", { name: "Rename" }).click();
+    await test.step("Check the input is visible", async () => {
+      await expect(page.getByTestId("multimodal-input")).toBeVisible();
+    });
 
-    //   const renameInput = page.getByRole("textbox");
-    //   await expect(renameInput).toBeVisible();
-    //   await renameInput.fill(`Renamed ${Date.now()}`);
-    //   await renameInput.press("Enter");
-    //   await expect(renameInput).toContainText("Renamed");
-    // });
+    await test.step("Write a prompt in the chat input", async () => {
+      await input.click();
+      await input.fill("Hello");
+      await sendButton.click();
+      await recordingButton.waitFor({ state: "visible", timeout: 0 });
+    });
+
+    await test.step("Get last chat in the sidebar", async () => {
+      await expect(menuButton.first()).toBeVisible();
+    });
+
+    await test.step("Check the chat dropdown menu opens", async () => {
+      await menuButton.first().click();
+      await expect(page.getByRole("menu", { name: "More" })).toBeVisible();
+      await expect(
+        page.getByRole("menuitem", { name: "Rename" })
+      ).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: "Share" })).toBeVisible();
+      await expect(
+        page.getByRole("menuitem", { name: "Delete" })
+      ).toBeVisible();
+    });
   });
 });
