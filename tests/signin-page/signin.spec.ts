@@ -204,8 +204,8 @@ test.describe("Smoke check log out", () => {
 
     await test.step("Open the app again and check if user is logged in", async () => {
       page = await context.newPage();
-      await page.goto(process.env.BASE_URL!);
-      await expect(page).toHaveURL(process.env.BASE_URL!);
+      await page.goto("/");
+      await expect(page).toHaveURL("/");
     });
 
     await test.step("Logout", async () => {
@@ -213,7 +213,7 @@ test.describe("Smoke check log out", () => {
         .getByRole("button", { name: "80766ec5-2d98-49a3-a15a-" })
         .click();
       await page.getByRole("menuitem", { name: "Sign out" }).click();
-      await expect(page).toHaveURL(`${process.env.BASE_URL!}/signin`);
+      await expect(page).toHaveURL(`/signin`);
     });
   });
 });
