@@ -7,5 +7,3 @@ node_modules/
 /playwright/.cache/
 .env
 tests/storage/*.json
-tests/chat-optimization
-storageState.json

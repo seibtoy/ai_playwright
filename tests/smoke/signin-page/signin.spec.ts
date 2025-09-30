@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { generateEmail } from "../helpers/generate-email";
-import { ensureAuthorized } from "../helpers/save-session";
+import { generateEmail } from "../../helpers/generate-email";
+import { ensureAuthorized } from "../../helpers/save-session";
 
 test.describe("UI elements before email submission", () => {
   test.beforeEach(async ({ page }) => {

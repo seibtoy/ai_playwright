@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureAuthorized } from "../helpers/save-session";
+import { ensureAuthorized } from "../../helpers/save-session";
 
 test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
   test.beforeEach(async ({ page }) => {

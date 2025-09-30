@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureAuthorized } from "../helpers/save-session";
+import { ensureAuthorized } from "../../helpers/save-session";
 
 test.describe("User interacts with chat UI", () => {
   test.beforeEach(async ({ page }) => {
