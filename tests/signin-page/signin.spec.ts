@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { generateEmail } from "../helpers/generate-email";
+import { ensureAuthorized } from "../helpers/save-session";
 
 test.describe("UI elements before email submission", () => {
   test.beforeEach(async ({ page }) => {
@@ -162,5 +163,57 @@ test.describe("Email verification code API requests", () => {
 
     const response = await responsePromise;
     expect(response.ok()).toBe(true);
+  });
+});
+
+test.describe("Smoke check log out", () => {
+  test("Check if user is logged in after closing the app", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await test.step("Login", async () => {
+      await ensureAuthorized(page);
+    });
+
+    await test.step("Close the app", async () => {
+      await page.close();
+    });
+
+    await test.step("Open the app again and check if user is logged in", async () => {
+      const newPage = await context.newPage();
+      await newPage.goto(process.env.BASE_URL!);
+      await expect(newPage).toHaveURL(process.env.BASE_URL!);
+    });
+  });
+
+  test("Check if user is logged out after closing the app after logout", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    let page = await context.newPage();
+
+    await test.step("Login", async () => {
+      await ensureAuthorized(page);
+    });
+
+    await test.step("Close the app", async () => {
+      await page.close();
+    });
+
+    await test.step("Open the app again and check if user is logged in", async () => {
+      page = await context.newPage();
+      await page.goto(process.env.BASE_URL!);
+      await expect(page).toHaveURL(process.env.BASE_URL!);
+    });
+
+    await test.step("Logout", async () => {
+      await page
+        .getByRole("button", { name: "80766ec5-2d98-49a3-a15a-" })
+        .click();
+      await page.getByRole("menuitem", { name: "Sign out" }).click();
+      await expect(page).toHaveURL(`${process.env.BASE_URL!}/signin`);
+    });
   });
 });
