@@ -1,9 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { ensureAuthorized } from "../helpers/save-session";
+import { ChatPage } from "../pages/chat-page";
 
 test.describe("Chat optimization", () => {
+  let chatPage: ChatPage;
+
   test.beforeEach(async ({ page }) => {
     await ensureAuthorized(page);
+    chatPage = new ChatPage(page);
   });
   test("Long message prompt 300 times with avg block timing", async ({
     page,
@@ -12,10 +16,6 @@ test.describe("Chat optimization", () => {
 
     const longMessagePrompt =
       "Hey, write me a message that simply fills 2000 symbols";
-    const sendButton = page.getByTestId("send-button");
-    const recordingButton = page.getByRole("button", {
-      name: "Start recording",
-    });
 
     const responseTimes: { iteration: number; avgResponseTimeMs: number }[] =
       [];
@@ -25,20 +25,23 @@ test.describe("Chat optimization", () => {
 
     const sendMessage = async (iteration: number) => {
       await test.step(`Iteration ${iteration}: fill and send message`, async () => {
-        const input = page.getByTestId("multimodal-input");
+        await chatPage.input
+          .waitFor({ state: "visible", timeout: 20000 })
+          .catch(() => {
+            throw new Error(
+              `Input field not found at iteration ${iteration}. Page may have crashed.`
+            );
+          });
 
-        await input.waitFor({ state: "visible", timeout: 20000 }).catch(() => {
-          throw new Error(
-            `Input field not found at iteration ${iteration}. Page may have crashed.`
-          );
-        });
-
-        await input.click();
-        await input.fill(longMessagePrompt);
+        await chatPage.input.click();
+        await chatPage.input.fill(longMessagePrompt);
 
         const startTime = Date.now();
-        await sendButton.click();
-        await recordingButton.waitFor({ state: "visible", timeout: 0 });
+        await chatPage.sendButton.click();
+        await chatPage.recordingButton.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
         const elapsed = Date.now() - startTime;
 
         batch.push(elapsed);
@@ -72,7 +75,9 @@ test.describe("Chat optimization", () => {
     });
   });
 
-  test("15 prompts checking", async ({ page }) => {
+  test("Send 15 different prompts 10 times each, check response time, thinking time and typing time and check for jailbreak trigger", async ({
+    page,
+  }) => {
     test.setTimeout(0);
 
     const prompts = [
@@ -91,13 +96,6 @@ test.describe("Chat optimization", () => {
     const jailbreakTrigger =
       "I can't provide that information for security reasons";
 
-    const sendButton = page.getByTestId("send-button");
-    const recordingButton = page.getByRole("button", {
-      name: "Start recording",
-    });
-    const thinkingLocator = page.getByText("Thinking...");
-    const input = page.getByTestId("multimodal-input");
-
     const responseTimes: {
       promptIndex: number;
       iteration: number;
@@ -114,32 +112,41 @@ test.describe("Chat optimization", () => {
 
       for (let i = 1; i <= runsPerPrompt; i++) {
         try {
-          await input.waitFor({ state: "visible", timeout: 20000 });
+          await chatPage.input.waitFor({ state: "visible", timeout: 20000 });
         } catch (e) {
           throw new Error(
             `Input field not found for prompt ${p}, iteration ${i}. Page may have crashed (e.g. 404).`
           );
         }
 
-        await input.click();
-        await input.fill(prompt);
+        await chatPage.input.click();
+        await chatPage.input.fill(prompt);
 
         const startTime = Date.now();
-        await sendButton.click();
+        await chatPage.sendButton.click();
 
-        await thinkingLocator.waitFor({ state: "visible", timeout: 0 });
+        await chatPage.thinkingLocator.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
         const thinkingStart = Date.now();
 
-        await thinkingLocator.waitFor({ state: "detached", timeout: 0 });
+        await chatPage.thinkingLocator.waitFor({
+          state: "detached",
+          timeout: 0,
+        });
         const thinkingEnd = Date.now();
 
-        await recordingButton.waitFor({ state: "visible", timeout: 0 });
+        await chatPage.recordingButton.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
         const endTime = Date.now();
 
         const elapsed = endTime - startTime;
         const thinkingTime = thinkingEnd - thinkingStart;
 
-        const lastMessage = page.getByTestId("message-content").last();
+        const lastMessage = chatPage.messageContent.last();
         const messageText = await lastMessage.textContent();
         const hasText = messageText?.includes(jailbreakTrigger);
         if (hasText) {

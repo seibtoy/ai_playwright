@@ -1,10 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { generateEmail } from "../../helpers/generate-email";
 import { ensureAuthorized } from "../../helpers/save-session";
+import { SigninPage } from "../../pages/signin-page";
+import { Sidebar } from "../../pages/sidebar-component";
 
 test.describe("UI elements before email submission", () => {
+  let signinPage: SigninPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/signin");
+    signinPage = new SigninPage(page);
   });
 
   test("Verifies the sign-in page elements", async ({ page }) => {
@@ -18,13 +23,9 @@ test.describe("UI elements before email submission", () => {
 
     await expect(page.getByText("Email Address")).toBeVisible();
 
-    await expect(
-      page.getByRole("textbox", { name: "Email Address" })
-    ).toBeVisible();
+    await expect(signinPage.emailInput).toBeVisible();
 
-    await expect(
-      page.getByRole("button", { name: "Send verification code" })
-    ).toBeVisible();
+    await expect(signinPage.sendCodeButton).toBeVisible();
 
     await expect(page.getByText("By continuing, you agree to")).toBeVisible();
   });
@@ -34,7 +35,7 @@ test.describe("UI elements before email submission", () => {
   }) => {
     const newPagePromise = page.waitForEvent("popup");
 
-    await page.getByText("Terms of Service").click();
+    await signinPage.termsOfServiceLink.click();
 
     const newPage = await newPagePromise;
 
@@ -46,47 +47,35 @@ test.describe("UI elements before email submission", () => {
   test("The 'Send verification code' button should be inactive until the email is valid.", async ({
     page,
   }) => {
-    const sendButton = page.getByRole("button", {
-      name: "Send verification code",
-    });
-    const emailInput = page.getByRole("textbox", { name: "Email Address" });
+    await expect(signinPage.sendCodeButton).toBeDisabled();
 
-    await expect(sendButton).toBeDisabled();
+    await signinPage.emailInput.fill("invalid-email-format");
+    await expect(signinPage.sendCodeButton).toBeDisabled();
 
-    await emailInput.fill("invalid-email-format");
-    await expect(sendButton).toBeDisabled();
+    await signinPage.emailInput.fill(generateEmail());
 
-    await emailInput.fill(generateEmail());
-
-    await expect(sendButton).toBeEnabled();
+    await expect(signinPage.sendCodeButton).toBeEnabled();
   });
 });
 
 test.describe("UI elements after email submission", () => {
+  let signinPage: SigninPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/signin");
+    signinPage = new SigninPage(page);
   });
 
   test("Shows toast after email submission", async ({ page }) => {
-    const sendButton = page.getByRole("button", {
-      name: "Send verification code",
-    });
-    const emailInput = page.getByRole("textbox", { name: "Email Address" });
-
-    await emailInput.fill(generateEmail());
-    await sendButton.click();
+    await signinPage.emailInput.fill(generateEmail());
+    await signinPage.sendCodeButton.click();
 
     await expect(page.getByTestId("toast")).toBeVisible();
   });
 
   test("Displays verification form after sending code", async ({ page }) => {
-    const sendButton = page.getByRole("button", {
-      name: "Send verification code",
-    });
-    const emailInput = page.getByRole("textbox", { name: "Email Address" });
-
-    await emailInput.fill(generateEmail());
-    await sendButton.click();
+    await signinPage.emailInput.fill(generateEmail());
+    await signinPage.sendCodeButton.click();
 
     await expect(page.getByRole("img").nth(1)).toBeVisible();
     await expect(
@@ -96,47 +85,36 @@ test.describe("UI elements after email submission", () => {
     await expect(
       page.getByText("Verification Code", { exact: true })
     ).toBeVisible();
-    await expect(
-      page.getByText("Didn't receive the code?Resend code")
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Use a different email" })
-    ).toBeVisible();
+    await expect(page.getByText("Didn't receive the code?")).toBeVisible();
+    await expect(signinPage.resendCodeButton).toBeVisible();
+    await expect(signinPage.useDifferentEmailButton).toBeVisible();
   });
 
   test('Returns to email input when clicking "Use a different email"', async ({
     page,
   }) => {
-    const sendButton = page.getByRole("button", {
-      name: "Send verification code",
-    });
-    const emailInput = page.getByRole("textbox", { name: "Email Address" });
-
-    await emailInput.fill(generateEmail());
-    await sendButton.click();
-
-    await page.getByRole("button", { name: "Use a different email" }).click();
-    await expect(
-      page.getByRole("textbox", { name: "Email Address" })
-    ).toBeVisible();
+    await signinPage.emailInput.fill(generateEmail());
+    await signinPage.sendCodeButton.click();
+    await signinPage.useDifferentEmailButton.click();
+    await expect(signinPage.emailInput).toBeVisible();
   });
 });
 
 test.describe("Email verification code API requests", () => {
+  let signinPage: SigninPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/signin");
+    signinPage = new SigninPage(page);
   });
 
   test("Sends a request to /signin when submitting a valid email", async ({
     page,
   }) => {
-    await page
-      .getByRole("textbox", { name: "Email Address" })
-      .fill(generateEmail());
-
+    await signinPage.emailInput.fill(generateEmail());
     const responsePromise = page.waitForResponse("**/signin");
 
-    await page.getByRole("button", { name: "Send verification code" }).click();
+    await signinPage.sendCodeButton.click();
 
     const response = await responsePromise;
     expect(response.ok()).toBe(true);
@@ -148,18 +126,14 @@ test.describe("Email verification code API requests", () => {
     ).toBeVisible();
   });
   test("Resend code button sends request", async ({ page }) => {
-    await page
-      .getByRole("textbox", { name: "Email Address" })
-      .fill(generateEmail());
-    await page.getByRole("button", { name: "Send verification code" }).click();
+    await signinPage.emailInput.fill(generateEmail());
+    await signinPage.sendCodeButton.click();
 
-    await expect(
-      page.getByRole("button", { name: "Resend code" })
-    ).toBeVisible();
+    await expect(signinPage.resendCodeButton).toBeVisible();
 
     const responsePromise = page.waitForResponse("**/signin");
 
-    await page.getByRole("button", { name: "Resend code" }).click();
+    await signinPage.resendCodeButton.click();
 
     const response = await responsePromise;
     expect(response.ok()).toBe(true);
@@ -167,6 +141,14 @@ test.describe("Email verification code API requests", () => {
 });
 
 test.describe("Smoke check log out", () => {
+  let signinPage: SigninPage;
+  let sidebar: Sidebar;
+
+  test.beforeEach(async ({ page }) => {
+    signinPage = new SigninPage(page);
+    sidebar = new Sidebar(page);
+  });
+
   test("Check if user is logged in after closing the app", async ({
     browser,
   }) => {
@@ -183,8 +165,8 @@ test.describe("Smoke check log out", () => {
 
     await test.step("Open the app again and check if user is logged in", async () => {
       const newPage = await context.newPage();
-      await newPage.goto(process.env.BASE_URL!);
-      await expect(newPage).toHaveURL(process.env.BASE_URL!);
+      await newPage.goto("/");
+      await expect(newPage).toHaveURL("/");
     });
   });
 
@@ -204,16 +186,25 @@ test.describe("Smoke check log out", () => {
 
     await test.step("Open the app again and check if user is logged in", async () => {
       page = await context.newPage();
+      sidebar = new Sidebar(page);
       await page.goto("/");
       await expect(page).toHaveURL("/");
     });
 
     await test.step("Logout", async () => {
-      await page
-        .getByRole("button", { name: "80766ec5-2d98-49a3-a15a-" })
-        .click();
-      await page.getByRole("menuitem", { name: "Sign out" }).click();
+      await sidebar.clickMenuLinkAndAssertRedirect("Sign out", "/signin");
       await expect(page).toHaveURL(`/signin`);
+    });
+
+    await test.step("Close the app", async () => {
+      await page.close();
+    });
+
+    await test.step("Open the app again and check if user is logged out", async () => {
+      page = await context.newPage();
+      sidebar = new Sidebar(page);
+      await page.goto("/");
+      await expect(page).toHaveURL("/signin");
     });
   });
 });

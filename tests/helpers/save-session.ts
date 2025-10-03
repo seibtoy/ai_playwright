@@ -4,6 +4,13 @@ import fs from "fs";
 
 const STORAGE_STATE = "tests/storage/storage-state.json";
 
+if (!process.env.BASE_URL) {
+  throw new Error("BASE_URL have not found in env variables");
+}
+if (!process.env.MAILSLURP_API_KEY) {
+  throw new Error("MAILSLURP_API_KEY have not found in env variables");
+}
+
 export async function performLogin(page: Page) {
   const mailslurp = new MailSlurp({
     apiKey: process.env.MAILSLURP_API_KEY!,

@@ -2,11 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
+const envPath = path.resolve(__dirname, ".env");
+dotenv.config({ path: envPath, override: true });
+
+if (!process.env.BASE_URL) {
+  console.error("BASE_URL have not found in env variables");
+  console.error("Check .env file in root project");
+  process.exit(1);
+}
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -30,6 +33,10 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    /* Timeout settings */
+    actionTimeout: 30000,
+    navigationTimeout: 30000,
   },
   /* Configure projects for major browsers */
   projects: [
