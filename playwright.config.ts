@@ -10,8 +10,8 @@ dotenv.config({ path: envPath, override: true });
  */
 export default defineConfig({
   testDir: "./tests",
-  tsconfig: "./tsconfig.json", // for local development
-  // tsconfig: "./tsconfig.tests.json", // for production
+  // tsconfig: "./tsconfig.json", // for local development
+  tsconfig: "./tsconfig.tests.json", // for production
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
