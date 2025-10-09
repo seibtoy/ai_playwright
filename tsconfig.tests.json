@@ -3,12 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@pages/*": ["pages/*"],
-      "@helpers/*": ["helpers/*"],
-      "@config/*": ["config/*"]
+      "@pages/*": ["tests/pages/*"],
+      "@helpers/*": ["tests/helpers/*"],
+      "@config/*": ["tests/config/*"]
     },
     "types": ["node", "@playwright/test"],
     "moduleResolution": "node"
   },
-  "include": ["."]
+  "include": ["tests/**/*.ts"]
 }
