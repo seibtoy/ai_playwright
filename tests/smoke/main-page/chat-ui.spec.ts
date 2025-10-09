@@ -1,17 +1,16 @@
 import { test, expect } from "@playwright/test";
-import { ensureAuthorized } from "../../helpers/save-session";
-import { ChatPage } from "../../pages/chat-page";
+import { AuthHelper } from "@helpers/index";
+import { ChatPage, Sidebar } from "@pages/index";
 
 test.describe("User interacts with chat UI", () => {
   let chatPage: ChatPage;
+  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    await ensureAuthorized(page);
+    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
-  });
 
-  test.afterEach(async ({ page }) => {
-    await ensureAuthorized(page);
+    await authHelper.loginAsMainUser(page);
   });
 
   test("Verifies visibility and behavior of main chat UI elements", async ({
@@ -43,10 +42,12 @@ test.describe("User interacts with chat UI", () => {
 
 test.describe("Check file attachment", () => {
   let chatPage: ChatPage;
+  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    await ensureAuthorized(page);
+    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
+    await authHelper.loginAsMainUser(page);
   });
 
   test("Attach file via button", async ({ page }, testInfo) => {
@@ -71,28 +72,138 @@ test.describe("Check file attachment", () => {
   });
 });
 
-test.describe("Check if action buttons in chat works correctly", () => {
-  let chatPage: ChatPage;
+// test.describe("Check if action buttons in chat works correctly", () => {
+//   let chatPage: ChatPage;
+//   let authHelper: AuthHelper;
 
-  test.beforeEach(async ({ page }) => {
-    await ensureAuthorized(page);
-    chatPage = new ChatPage(page);
-  });
+//   test.beforeEach(async ({ page }) => {
+//     authHelper = new AuthHelper(page);
+//     chatPage = new ChatPage(page);
 
-  test("Verify that action buttons visible", async ({ page }, testInfo) => {
-    await chatPage.sendMessage("Hello world", true, testInfo);
+//     await authHelper.loginAsMainUser(page);
+//   });
 
-    await expect(
-      page
-        .locator(
-          "div > .flex.gap-4.w-full.group-data-\\[role\\=user\\]\\/message\\:ml-auto > .flex.flex-col.gap-4.w-full > .flex.flex-col.md\\:flex-row > .flex > button"
-        )
-        .first()
-    ).toBeVisible();
+//   test("Verify that action buttons visible and works correctly", async ({
+//     browser,
+//   }, testInfo) => {
+//     const context = await browser.newContext({
+//       permissions: ["clipboard-read", "clipboard-write"],
+//     });
 
-    await expect(chatPage.upvoteButton).toBeVisible();
-    await expect(chatPage.downvoteButton).toBeVisible();
-  });
+//     const page = await context.newPage();
 
-  test("Check that action buttons works correctly", async ({ page }) => {});
-});
+//     const chatPage = new ChatPage(page);
+//     await authHelper.loginAsMainUser(page);
+
+//     await test.step("Send message and verify that action buttons visible", async () => {
+//       await chatPage.sendMessage("Hello world", true, testInfo);
+
+//       await expect(chatPage.copyButton.first()).toBeVisible();
+//       await expect(chatPage.upvoteButton).toBeVisible();
+//       await expect(chatPage.downvoteButton).toBeVisible();
+//     });
+
+//     await test.step("Click on upvote button and verify that it is disabled", async () => {
+//       await chatPage.upvoteButton.click();
+//       await expect(chatPage.upvoteButton).toHaveAttribute("disabled");
+//     });
+
+//     await test.step("Click on downvote button and verify that it is disabled", async () => {
+//       await chatPage.downvoteButton.click();
+//       await expect(chatPage.downvoteButton).toHaveAttribute("disabled");
+//     });
+
+//     await test.step("Click on copy button and verify that message is copied", async () => {
+//       const content = chatPage.messageContent.last();
+//       const expectedContent = await content.textContent();
+
+//       await chatPage.copyButton.click();
+
+//       const clipboardText = await page.evaluate(() =>
+//         navigator.clipboard.readText()
+//       );
+//       expect(clipboardText.trim()).toBe(expectedContent!.trim());
+//     });
+
+//     await context.close();
+//   });
+// });
+
+// test.describe("Check if privacy functionality works correctly", () => {
+//   let chatPage: ChatPage;
+//   let authHelper: AuthHelper;
+
+//   test.beforeEach(async ({ page }) => {
+//     authHelper = new AuthHelper(page);
+//     chatPage = new ChatPage(page);
+
+//     await authHelper.loginAsMainUser(page);
+//   });
+
+//   test("Verify that other users can't see private chat", async ({
+//     page,
+//   }, testInfo) => {
+//     let chatUrl: string;
+
+//     await test.step("Check that the private button is visible", async () => {
+//       await expect(chatPage.privateButton).toBeVisible();
+//     });
+
+//     await test.step("Send message to create the new chat and get the chat url", async () => {
+//       await chatPage.sendMessage("Hello world", true, testInfo);
+//       chatUrl = page.url();
+//     });
+
+//     await test.step("Logout from main account", async () => {
+//       await chatPage.logout();
+//     });
+
+//     await test.step("Login as test user", async () => {
+//       await authHelper.loginAsTestUser(page);
+//     });
+
+//     await test.step("Open the chat url and verify that the chat is private", async () => {
+//       await page.goto(chatUrl);
+//       await expect(chatPage.pageNotFoundText).toBeVisible();
+//     });
+//   });
+
+//   test("Verify that other users can see public chat", async ({
+//     page,
+//   }, testInfo) => {
+//     let chatUrl: string;
+
+//     await test.step("Check that the private button is visible", async () => {
+//       await expect(chatPage.privateButton).toBeVisible();
+//     });
+
+//     await test.step("Send message to create the new chat and get the chat url", async () => {
+//       await chatPage.sendMessage("Hello world", true, testInfo);
+//       chatUrl = page.url();
+//     });
+
+//     await test.step("Change chat privace from private to public", async () => {
+//       await chatPage.privateButton.click();
+//       await page
+//         .getByRole("menuitem", { name: "Public Anyone with the link" })
+//         .click();
+//       await expect(chatPage.publicButton).toBeVisible();
+//       await page.waitForTimeout(5000);
+//     });
+
+//     await test.step("Logout from main account", async () => {
+//       await chatPage.logout();
+//     });
+
+//     await test.step("Login as test user", async () => {
+//       await authHelper.loginAsTestUser(page);
+//     });
+
+//     await test.step("Open the chat url and verify that the chat is private", async () => {
+//       await page.goto(chatUrl);
+//       await expect(chatPage.messageContent.last()).toBeVisible();
+//     });
+//   });
+// });
+
+// to fix

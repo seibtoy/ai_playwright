@@ -5,17 +5,13 @@ import path from "path";
 const envPath = path.resolve(__dirname, ".env");
 dotenv.config({ path: envPath, override: true });
 
-if (!process.env.BASE_URL) {
-  console.error("BASE_URL have not found in env variables");
-  console.error("Check .env file in root project");
-  process.exit(1);
-}
-
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   testDir: "./tests",
+  tsconfig: "./tsconfig.json", // for local development
+  // tsconfig: "./tsconfig.tests.json", // for production
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

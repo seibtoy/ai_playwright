@@ -1,7 +1,7 @@
 import { type Page, type Locator, expect } from "@playwright/test";
-import { ChatPage } from "./chat-page";
 
-export class Sidebar extends ChatPage {
+export class Sidebar {
+  protected readonly page: Page;
   readonly logoLink: Locator;
   readonly takeAssessmentLink: Locator;
   readonly runBusinessLink: Locator;
@@ -12,8 +12,14 @@ export class Sidebar extends ChatPage {
   readonly adminMenuItem: Locator;
   readonly responseAggregationLink: Locator;
 
+  readonly chatActionsDropdown: Locator;
+  readonly deleteChatButton: Locator;
+  readonly confirmDeleteChatButton: Locator;
+
+  readonly moreChatDropdown: Locator;
+
   constructor(page: Page) {
-    super(page);
+    this.page = page;
     this.logoLink = page.getByRole("link", { name: "AI Thought Partner™" });
     this.takeAssessmentLink = page.getByRole("link", {
       name: "Take the Assessment",
@@ -34,6 +40,14 @@ export class Sidebar extends ChatPage {
     this.responseAggregationLink = page.getByRole("link", {
       name: "Response Aggregation",
     });
+    this.chatActionsDropdown = page.locator(
+      "button[data-sidebar='menu-action'][data-slot='dropdown-menu-trigger']"
+    );
+    this.deleteChatButton = page.getByRole("menuitem", { name: "Delete" });
+    this.confirmDeleteChatButton = page.getByRole("button", {
+      name: "Continue",
+    });
+    this.moreChatDropdown = page.getByRole("menu", { name: "More" });
   }
 
   async getTheme(): Promise<string> {
@@ -63,5 +77,10 @@ export class Sidebar extends ChatPage {
     await this.openSettings();
     await this.page.getByRole("menuitem", { name }).click();
     await expect(this.page).toHaveURL(expectedUrl);
+  }
+
+  async logout() {
+    await this.openSettings();
+    await this.page.getByRole("menuitem", { name: "Sign out" }).click();
   }
 }

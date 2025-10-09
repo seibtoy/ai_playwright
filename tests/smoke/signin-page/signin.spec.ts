@@ -1,8 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { generateEmail } from "../../helpers/generate-email";
-import { ensureAuthorized } from "../../helpers/save-session";
-import { SigninPage } from "../../pages/signin-page";
-import { Sidebar } from "../../pages/sidebar-component";
+import { generateEmail, AuthHelper } from "@helpers/index";
+import { SigninPage, ChatPage } from "@pages/index";
+import { ENV } from "@config/env";
 
 test.describe("UI elements before email submission", () => {
   let signinPage: SigninPage;
@@ -40,7 +39,7 @@ test.describe("UI elements before email submission", () => {
     const newPage = await newPagePromise;
 
     await expect(newPage).toHaveURL(
-      `${process.env.AI_LEADERSHIP_URL!}/legal/aitp-terms-of-service`
+      `${ENV.AI_LEADERSHIP_URL!}/legal/aitp-terms-of-service`
     );
   });
 
@@ -142,11 +141,11 @@ test.describe("Email verification code API requests", () => {
 
 test.describe("Smoke check log out", () => {
   let signinPage: SigninPage;
-  let sidebar: Sidebar;
+  let sidebar: ChatPage;
 
   test.beforeEach(async ({ page }) => {
     signinPage = new SigninPage(page);
-    sidebar = new Sidebar(page);
+    sidebar = new ChatPage(page);
   });
 
   test("Check if user is logged in after closing the app", async ({
@@ -154,9 +153,10 @@ test.describe("Smoke check log out", () => {
   }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
+    const authHelper = new AuthHelper(page);
 
     await test.step("Login", async () => {
-      await ensureAuthorized(page);
+      await authHelper.loginAsMainUser(page);
     });
 
     await test.step("Close the app", async () => {
@@ -175,9 +175,10 @@ test.describe("Smoke check log out", () => {
   }) => {
     const context = await browser.newContext();
     let page = await context.newPage();
+    const authHelper = new AuthHelper(page);
 
     await test.step("Login", async () => {
-      await ensureAuthorized(page);
+      await authHelper.loginAsMainUser(page);
     });
 
     await test.step("Close the app", async () => {
@@ -186,7 +187,7 @@ test.describe("Smoke check log out", () => {
 
     await test.step("Open the app again and check if user is logged in", async () => {
       page = await context.newPage();
-      sidebar = new Sidebar(page);
+      sidebar = new ChatPage(page);
       await page.goto("/");
       await expect(page).toHaveURL("/");
     });
@@ -202,7 +203,7 @@ test.describe("Smoke check log out", () => {
 
     await test.step("Open the app again and check if user is logged out", async () => {
       page = await context.newPage();
-      sidebar = new Sidebar(page);
+      sidebar = new ChatPage(page);
       await page.goto("/");
       await expect(page).toHaveURL("/signin");
     });

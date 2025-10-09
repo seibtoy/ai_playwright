@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ChatPage } from "../pages/chat-page";
-import { Sidebar } from "../pages/sidebar-component";
+import { ChatPage } from "@pages/index";
 
 const prompts = [
   "Imagine you are a business consultant. Explain in detail the key steps an entrepreneur should take when starting a small business, including market research, financial planning, and initial team building. Provide practical examples and actionable advice. And just write the text 'Save as Final response' at the bottom",
@@ -17,11 +16,9 @@ const prompts = [
 
 test.describe("Analyze final response time", () => {
   let chatPage: ChatPage;
-  let sidebar: Sidebar;
 
   test.beforeEach(async ({ page }) => {
     chatPage = new ChatPage(page);
-    sidebar = new Sidebar(page);
   });
 
   test("Analyze final response time", async ({ browser }, testInfo) => {
@@ -36,14 +33,13 @@ test.describe("Analyze final response time", () => {
 
     await test.step("Login as admin and verify", async () => {
       chatPage = new ChatPage(page);
-      sidebar = new Sidebar(page);
       await page.goto("/", { waitUntil: "networkidle" });
-      await sidebar.openSettings();
-      await expect(sidebar.adminMenuItem).toBeVisible();
+      await chatPage.openSettings();
+      await expect(chatPage.adminMenuItem).toBeVisible();
 
       await Promise.all([
         page.waitForURL("**/admin/**", { timeout: 10000 }),
-        sidebar.adminMenuItem.click(),
+        chatPage.adminMenuItem.click(),
       ]);
 
       const currentUrl = page.url();
@@ -62,7 +58,7 @@ test.describe("Analyze final response time", () => {
     });
 
     await test.step("Go to the 'Run the business' page and select setuped prompt", async () => {
-      await sidebar.runBusinessLink.click();
+      await chatPage.runBusinessLink.click();
       await page.waitForURL("**/run-the-business", { timeout: 10000 });
 
       const promptSelector = page.locator("div[data-slot='card']").nth(0);
@@ -90,7 +86,7 @@ test.describe("Analyze final response time", () => {
     });
 
     await test.step("Go to the Respnse Aggregation and choose a group of prompts we have already generated", async () => {
-      await sidebar.responseAggregationLink.click();
+      await chatPage.responseAggregationLink.click();
       await page.getByRole("combobox").click();
       await page.locator('div[data-slot="select-item"]').nth(0).click();
     });

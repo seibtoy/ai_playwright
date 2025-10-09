@@ -1,14 +1,18 @@
-import { test, expect } from "@playwright/test";
-import { ensureAuthorized } from "../helpers/save-session";
-import { ChatPage } from "../pages/chat-page";
+import { test } from "@playwright/test";
+import { AuthHelper } from "@helpers/index";
+import { ChatPage } from "@pages/index";
 
 test.describe("Chat optimization", () => {
   let chatPage: ChatPage;
+  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    await ensureAuthorized(page);
+    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
+
+    await authHelper.loginAsMainUser(page);
   });
+
   test("Long message prompt 300 times with avg block timing", async ({
     page,
   }) => {

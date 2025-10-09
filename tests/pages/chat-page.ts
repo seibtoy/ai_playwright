@@ -4,30 +4,33 @@ import {
   expect,
   type TestInfo,
 } from "@playwright/test";
+import { Sidebar } from "./sidebar-component";
 
-export class ChatPage {
-  protected readonly page: Page;
+export class ChatPage extends Sidebar {
   readonly input: Locator;
   readonly sendButton: Locator;
 
   readonly recordingButton: Locator;
   readonly recordingButtonWebkit: Locator;
 
-  readonly messageContent: Locator;
-  readonly messageContentWebkit: Locator;
-
-  readonly newChatButton: Locator;
   readonly privateButton: Locator;
+  readonly publicButton: Locator;
+
+  readonly messageContent: Locator;
+  readonly newChatButton: Locator;
   readonly feedbackButton: Locator;
   readonly attachmentsButton: Locator;
   readonly upvoteButton: Locator;
   readonly downvoteButton: Locator;
+  readonly copyButton: Locator;
   readonly inputAttachmentPreview: Locator;
   readonly thinkingLocator: Locator;
   readonly saveAsFinalResponseButton: Locator;
 
+  readonly pageNotFoundText: Locator;
+
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     this.input = page.getByTestId("multimodal-input");
     this.sendButton = page.getByTestId("send-button");
 
@@ -38,19 +41,26 @@ export class ChatPage {
       name: "Audio recording requires",
     });
 
-    this.messageContent = page.getByTestId("message-content");
-    this.messageContentWebkit = page.getByTestId("message-assistant");
-
-    this.newChatButton = page.getByRole("button", { name: "New Chat" });
     this.privateButton = page.getByRole("button", { name: "Private" });
+    this.publicButton = page.getByRole("button", { name: "Public" });
+
+    this.messageContent = page.getByTestId("message-content");
+    this.newChatButton = page.getByRole("button", { name: "New Chat" });
     this.feedbackButton = page.locator('button[data-slot="popover-trigger"]');
     this.attachmentsButton = page.getByTestId("attachments-button");
     this.upvoteButton = page.getByTestId("message-upvote");
     this.downvoteButton = page.getByTestId("message-downvote");
+    this.copyButton = page
+      .getByTestId("message-assistant")
+      .getByRole("button")
+      .first();
     this.inputAttachmentPreview = page.getByTestId("input-attachment-preview");
     this.thinkingLocator = page.getByText("Thinking...");
     this.saveAsFinalResponseButton = page.getByRole("button", {
       name: "Save as Final Response",
+    });
+    this.pageNotFoundText = page.getByRole("heading", {
+      name: "This page could not be found.",
     });
   }
 

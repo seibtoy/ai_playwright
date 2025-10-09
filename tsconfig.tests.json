@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@pages/*": ["pages/*"],
+      "@helpers/*": ["helpers/*"],
+      "@config/*": ["config/*"]
+    },
+    "types": ["node", "@playwright/test"],
+    "moduleResolution": "node"
+  },
+  "include": ["."]
+}

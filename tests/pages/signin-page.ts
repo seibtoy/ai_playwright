@@ -7,10 +7,11 @@ export class SigninPage {
   readonly termsOfServiceLink: Locator;
   readonly resendCodeButton: Locator;
   readonly useDifferentEmailButton: Locator;
+  readonly verificationCodeInputGroup: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.getByRole("textbox", { name: "Email Address" });
+    this.emailInput = page.locator('input[name="email"]');
     this.sendCodeButton = page.getByRole("button", {
       name: "Send verification code",
     });
@@ -19,5 +20,8 @@ export class SigninPage {
     this.useDifferentEmailButton = page.getByRole("button", {
       name: "Use a different email",
     });
+    this.verificationCodeInputGroup = page
+      .getByRole("group", { name: "Verification code" })
+      .locator("input");
   }
 }
