@@ -1,19 +1,13 @@
 import { type Page } from "@playwright/test";
 import { MailSlurp, type InboxDto } from "mailslurp-client";
 import fs from "fs";
-import { SigninPage } from "@pages/index";
-import { ENV } from "@config/env";
+import { SigninPage } from "@/tests/pages/signin-page";
+import { URLS } from "@/tests/config/urls";
 
 interface InboxStorage {
   mainUser: InboxDto | null;
   testUser: InboxDto | null;
 }
-
-const CLASS_OPTIONS = Object.freeze({
-  STORAGE_STATE_MAIN_USER: "tests/storage/storage-state-main-user.json",
-  STORAGE_STATE_TEST_USER: "tests/storage/storage-state-test-user.json",
-  INBOX_STORAGE_FILE: "tests/storage/inboxes.json",
-});
 
 export class AuthHelper extends SigninPage {
   private readonly mailslurp: MailSlurp;
@@ -27,28 +21,38 @@ export class AuthHelper extends SigninPage {
   constructor(page: Page) {
     super(page);
     this.mailslurp = new MailSlurp({
-      apiKey: ENV.MAILSLURP_API_KEY,
+      apiKey: URLS.MAILSLURP_API_KEY,
     });
     AuthHelper.loadInboxStorage();
   }
 
+  private static ensureStoragePath() {
+    if (!fs.existsSync(URLS.STORAGE_PATH)) {
+      fs.mkdirSync(URLS.STORAGE_PATH, { recursive: true });
+    }
+  }
+
   private static loadInboxStorage() {
-    if (fs.existsSync(CLASS_OPTIONS.INBOX_STORAGE_FILE)) {
+    AuthHelper.ensureStoragePath();
+    if (fs.existsSync(URLS.INBOX_STORAGE_FILE)) {
       AuthHelper.inboxStorage = JSON.parse(
-        fs.readFileSync(CLASS_OPTIONS.INBOX_STORAGE_FILE, "utf-8")
+        fs.readFileSync(URLS.INBOX_STORAGE_FILE, "utf-8")
       );
     }
   }
 
   private static saveInboxStorage() {
+    AuthHelper.ensureStoragePath();
     fs.writeFileSync(
-      CLASS_OPTIONS.INBOX_STORAGE_FILE,
+      URLS.INBOX_STORAGE_FILE,
       JSON.stringify(AuthHelper.inboxStorage, null, 2)
     );
   }
 
   private static async initInboxes(): Promise<void> {
-    const mailslurp = new MailSlurp({ apiKey: ENV.MAILSLURP_API_KEY });
+    const mailslurp = new MailSlurp({
+      apiKey: URLS.MAILSLURP_API_KEY,
+    });
     let hasChanges = false;
 
     const allInboxes = await mailslurp.inboxController.getAllInboxes({
@@ -56,10 +60,10 @@ export class AuthHelper extends SigninPage {
     });
 
     const mainUserInboxPreview = allInboxes.content?.find(
-      (inbox) => inbox.name === ENV.MAILSLURP_MAIN_USER_INBOX_NAME
+      (inbox) => inbox.name === URLS.MAILSLURP_MAIN_USER_INBOX_NAME
     );
     const testUserInboxPreview = allInboxes.content?.find(
-      (inbox) => inbox.name === ENV.MAILSLURP_TEST_USER_INBOX_NAME
+      (inbox) => inbox.name === URLS.MAILSLURP_TEST_USER_INBOX_NAME
     );
 
     if (!AuthHelper.inboxStorage.mainUser) {
@@ -72,7 +76,7 @@ export class AuthHelper extends SigninPage {
       } else {
         AuthHelper.inboxStorage.mainUser =
           await mailslurp.inboxController.createInbox({
-            name: "playwright-main-user",
+            name: URLS.MAILSLURP_MAIN_USER_INBOX_NAME,
           });
         hasChanges = true;
       }
@@ -88,7 +92,7 @@ export class AuthHelper extends SigninPage {
       } else {
         AuthHelper.inboxStorage.testUser =
           await mailslurp.inboxController.createInbox({
-            name: "playwright-test-user",
+            name: URLS.MAILSLURP_TEST_USER_INBOX_NAME,
           });
         hasChanges = true;
       }
@@ -100,74 +104,125 @@ export class AuthHelper extends SigninPage {
   }
 
   private async completeLogin(page: Page, inbox: InboxDto) {
-    await page.goto("/signin");
-    await this.emailInput.fill(inbox.emailAddress);
+    await page.goto(`${URLS.BASE_URL}/signin`);
+
+    const testId = `login-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 6)}`;
+    const taggedEmail = inbox.emailAddress.replace("@", `+${testId}@`);
+
+    await this.emailInput.fill(taggedEmail);
     await this.sendCodeButton.click();
 
-    const emailMsg = await this.mailslurp.waitForLatestEmail(inbox.id, 30000);
-    const match = emailMsg.body!.match(
+    let targetEmailPreview;
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      const emails = await this.mailslurp.inboxController.getEmails({
+        inboxId: inbox.id,
+      });
+
+      targetEmailPreview = emails.find((email) =>
+        email.to?.some((to: any) => {
+          const recipient = typeof to === "string" ? to : to.emailAddress;
+          return recipient === taggedEmail || recipient === inbox.emailAddress;
+        })
+      );
+
+      if (targetEmailPreview) break;
+
+      console.log(
+        `[RETRY ${attempt}] Email for ${taggedEmail} not found yet, retrying...`
+      );
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+
+    if (!targetEmailPreview) {
+      throw new Error(`Email for ${taggedEmail} not found after retries`);
+    }
+
+    const targetEmail = await this.mailslurp.emailController.getEmail({
+      emailId: targetEmailPreview.id,
+    });
+
+    const match = targetEmail.body?.match(
       /<span[^>]*class=["']bold["'][^>]*>(\d{6})<\/span>/i
     );
     const code = match?.[1];
+    if (!code) throw new Error("Verification code not found in email");
 
     const inputs = this.verificationCodeInputGroup;
-    for (let i = 0; i < code!.length; i++) {
-      await inputs.nth(i).fill(code![i]);
+    for (let i = 0; i < code.length; i++) {
+      await inputs.nth(i).fill(code[i]);
     }
 
-    await page.waitForURL("/");
+    await page.waitForURL(`${URLS.BASE_URL}/`);
 
     await this.mailslurp.inboxController.deleteAllInboxEmails({
       inboxId: inbox.id,
     });
 
-    return inbox;
+    return { ...inbox, emailAddress: taggedEmail };
   }
 
   async loginAsMainUser(page: Page) {
     await AuthHelper.initInboxes();
     const inbox = AuthHelper.inboxStorage.mainUser!;
 
-    if (fs.existsSync(CLASS_OPTIONS.STORAGE_STATE_MAIN_USER)) {
+    if (fs.existsSync(URLS.STORAGE_STATE_MAIN_USER)) {
       const storageState = JSON.parse(
-        fs.readFileSync(CLASS_OPTIONS.STORAGE_STATE_MAIN_USER, "utf-8")
+        fs.readFileSync(URLS.STORAGE_STATE_MAIN_USER, "utf-8")
       );
       await page.context().addCookies(storageState.cookies);
-      await page.goto("/");
-      AuthHelper.currentUserInbox = inbox;
+      await page.goto(`${URLS.BASE_URL}/`);
+
+      const emailText = await page
+        .locator('button[data-sidebar="menu-button"] span.truncate')
+        .textContent();
+      if (emailText) {
+        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+      } else {
+        AuthHelper.currentUserInbox = inbox;
+      }
       return;
     }
 
     await page.context().clearCookies();
 
-    await this.completeLogin(page, inbox);
-    await page
-      .context()
-      .storageState({ path: CLASS_OPTIONS.STORAGE_STATE_MAIN_USER });
-    AuthHelper.currentUserInbox = inbox;
+    const cleanedInbox = await this.completeLogin(page, inbox);
+
+    AuthHelper.ensureStoragePath();
+    await page.context().storageState({ path: URLS.STORAGE_STATE_MAIN_USER });
+    AuthHelper.currentUserInbox = cleanedInbox;
   }
 
   async loginAsTestUser(page: Page) {
     await AuthHelper.initInboxes();
     const inbox = AuthHelper.inboxStorage.testUser!;
 
-    if (fs.existsSync(CLASS_OPTIONS.STORAGE_STATE_TEST_USER)) {
+    if (fs.existsSync(URLS.STORAGE_STATE_TEST_USER)) {
       const storageState = JSON.parse(
-        fs.readFileSync(CLASS_OPTIONS.STORAGE_STATE_TEST_USER, "utf-8")
+        fs.readFileSync(URLS.STORAGE_STATE_TEST_USER, "utf-8")
       );
       await page.context().addCookies(storageState.cookies);
-      await page.goto("/");
-      AuthHelper.currentUserInbox = inbox;
+      await page.goto(`${URLS.BASE_URL}/`);
+
+      const emailText = await page
+        .locator('button[data-sidebar="menu-button"] span.truncate')
+        .textContent();
+      if (emailText) {
+        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+      } else {
+        AuthHelper.currentUserInbox = inbox;
+      }
       return;
     }
 
     await page.context().clearCookies();
 
-    await this.completeLogin(page, inbox);
-    await page
-      .context()
-      .storageState({ path: CLASS_OPTIONS.STORAGE_STATE_TEST_USER });
-    AuthHelper.currentUserInbox = inbox;
+    const cleanedInbox = await this.completeLogin(page, inbox);
+
+    AuthHelper.ensureStoragePath();
+    await page.context().storageState({ path: URLS.STORAGE_STATE_TEST_USER });
+    AuthHelper.currentUserInbox = cleanedInbox;
   }
 
   static getCurrentUserInbox() {

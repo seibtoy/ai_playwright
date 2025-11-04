@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { ChatPage } from "@pages/index";
+import { ChatPage } from "@/tests/pages/chat-page";
+import { URLS } from "@/tests/config/urls";
 
 const prompts = [
   "Imagine you are a business consultant. Explain in detail the key steps an entrepreneur should take when starting a small business, including market research, financial planning, and initial team building. Provide practical examples and actionable advice. And just write the text 'Save as Final response' at the bottom",
@@ -25,103 +26,118 @@ test.describe("Analyze final response time", () => {
     test.setTimeout(0);
 
     const context = await browser.newContext({
-      storageState: "tests/storage/storage-state-admin.json",
+      storageState: URLS.STORAGE_STATE_ADMIN,
     });
-    const page = await context.newPage();
+    try {
+      const page = await context.newPage();
 
-    const iterations = 10;
+      const iterations = 10;
 
-    await test.step("Login as admin and verify", async () => {
-      chatPage = new ChatPage(page);
-      await page.goto("/", { waitUntil: "networkidle" });
-      await chatPage.openSettings();
-      await expect(chatPage.adminMenuItem).toBeVisible();
+      await test.step("Login as admin and verify", async () => {
+        chatPage = new ChatPage(page);
+        await page.goto(`${URLS.BASE_URL}/`, {
+          waitUntil: "networkidle",
+        });
+        await chatPage.openSettings();
+        await expect(chatPage.adminMenuItem).toBeVisible();
 
-      await Promise.all([
-        page.waitForURL("**/admin/**", { timeout: 10000 }),
-        chatPage.adminMenuItem.click(),
-      ]);
+        await Promise.all([
+          page.waitForURL("**/admin/**", { timeout: 10000 }),
+          chatPage.adminMenuItem.click(),
+        ]);
 
-      const currentUrl = page.url();
-      expect(currentUrl).toContain("/admin");
-    });
-    await test.step("Verify the user is in organization", async () => {
-      await page.goto("/admin/organizations");
-
-      const rows = page.locator("tr[data-slot='table-row']");
-      await expect(rows).toHaveCount(await rows.count());
-    });
-
-    await test.step("Go to the main page", async () => {
-      await page.goto("/", { waitUntil: "networkidle" });
-      await expect(chatPage.input).toBeVisible({ timeout: 10000 });
-    });
-
-    await test.step("Go to the 'Run the business' page and select setuped prompt", async () => {
-      await chatPage.runBusinessLink.click();
-      await page.waitForURL("**/run-the-business", { timeout: 10000 });
-
-      const promptSelector = page.locator("div[data-slot='card']").nth(0);
-      await promptSelector.click();
-      await chatPage.recordingButton.waitFor({
-        state: "visible",
-        timeout: 0,
+        const currentUrl = page.url();
+        expect(currentUrl).toContain(`${URLS.BASE_URL}/admin`);
       });
-    });
 
-    await test.step("Text with the chat and get 100 different responses", async () => {
-      for (let i = 0; i < prompts.length; i++) {
-        for (let k = 0; k < iterations; k++) {
-          console.log(
-            `Prompt ${i + 1}/${prompts.length}, iteration ${
-              k + 1
-            }/${iterations} is processing`
-          );
-          await chatPage.sendMessage(prompts[i], false, testInfo);
-          await expect(chatPage.saveAsFinalResponseButton.last()).toBeVisible();
-          await chatPage.saveAsFinalResponseButton.last().click();
-          await page.getByRole("button", { name: "Confirm & Submit" }).click();
+      await test.step("Verify the user is in organization", async () => {
+        await page.goto(`${URLS.BASE_URL}/admin/organizations`);
+
+        const rows = page.locator("tr[data-slot='table-row']");
+        await expect(rows).toHaveCount(await rows.count());
+      });
+
+      await test.step("Go to the main page", async () => {
+        await page.goto(`${URLS.BASE_URL}/`, {
+          waitUntil: "networkidle",
+        });
+        await expect(chatPage.input).toBeVisible({ timeout: 10000 });
+      });
+
+      await test.step("Go to the 'Run the business' page and select setuped prompt", async () => {
+        await chatPage.runBusinessLink.click();
+        await page.waitForURL(`${URLS.BASE_URL}/run-the-business`, {
+          timeout: 10000,
+        });
+
+        const promptSelector = page.locator("div[data-slot='card']").nth(0);
+        await promptSelector.click();
+        await chatPage.recordingButton.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
+      });
+
+      await test.step("Text with the chat and get 100 different responses", async () => {
+        for (let i = 0; i < prompts.length; i++) {
+          for (let k = 0; k < iterations; k++) {
+            console.log(
+              `Prompt ${i + 1}/${prompts.length}, iteration ${
+                k + 1
+              }/${iterations} is processing`
+            );
+            await chatPage.sendMessage(prompts[i], false, testInfo);
+            await expect(
+              chatPage.saveAsFinalResponseButton.last()
+            ).toBeVisible();
+            await chatPage.saveAsFinalResponseButton.last().click();
+            await page
+              .getByRole("button", { name: "Confirm & Submit" })
+              .click();
+          }
         }
-      }
-    });
-
-    await test.step("Go to the Respnse Aggregation and choose a group of prompts we have already generated", async () => {
-      await chatPage.responseAggregationLink.click();
-      await page.getByRole("combobox").click();
-      await page.locator('div[data-slot="select-item"]').nth(0).click();
-    });
-
-    await test.step("Select all responses and click on the 'Analyze' button", async () => {
-      await page.waitForTimeout(500);
-      await page.getByRole("button", { name: "Select All" }).click();
-      await page.getByRole("button", { name: /Analyze with AI/ }).click();
-      await page.waitForURL(/\/\?server_prompt=true&chat_id=.*/);
-    });
-
-    await test.step("Measure thinking and response time", async () => {
-      await chatPage.thinkingLocator.waitFor({
-        state: "visible",
-        timeout: 0,
       });
-      const thinkingStart = Date.now();
 
-      await chatPage.thinkingLocator.waitFor({
-        state: "detached",
-        timeout: 0,
+      await test.step("Go to the Respnse Aggregation and choose a group of prompts we have already generated", async () => {
+        await chatPage.responseAggregationLink.click();
+        await page.getByRole("combobox").click();
+        await page.locator('div[data-slot="select-item"]').nth(0).click();
       });
-      const thinkingEnd = Date.now();
 
-      await chatPage.recordingButton.waitFor({
-        state: "visible",
-        timeout: 0,
+      await test.step("Select all responses and click on the 'Analyze' button", async () => {
+        await page.waitForTimeout(500);
+        await page.getByRole("button", { name: "Select All" }).click();
+        await page.getByRole("button", { name: /Analyze with AI/ }).click();
+        await page.waitForURL(/\/\?server_prompt=true&chat_id=.*/);
       });
-      const endTime = Date.now();
 
-      const thinkingTime = thinkingEnd - thinkingStart;
-      const responseTime = endTime - thinkingStart;
+      await test.step("Measure thinking and response time", async () => {
+        await chatPage.thinkingLocator.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
+        const thinkingStart = Date.now();
 
-      console.log(`Thinking time: ${thinkingTime}ms`);
-      console.log(`Response (thinking + typing) time: ${responseTime}ms`);
-    });
+        await chatPage.thinkingLocator.waitFor({
+          state: "detached",
+          timeout: 0,
+        });
+        const thinkingEnd = Date.now();
+
+        await chatPage.recordingButton.waitFor({
+          state: "visible",
+          timeout: 0,
+        });
+        const endTime = Date.now();
+
+        const thinkingTime = thinkingEnd - thinkingStart;
+        const responseTime = endTime - thinkingStart;
+
+        console.log(`Thinking time: ${thinkingTime}ms`);
+        console.log(`Response (thinking + typing) time: ${responseTime}ms`);
+      });
+    } finally {
+      await context.close();
+    }
   });
 });

@@ -1,4 +1,5 @@
 import { type Page, type Locator } from "@playwright/test";
+import { URLS } from "@/tests/config/urls";
 
 export class SigninPage {
   readonly page: Page;
@@ -8,6 +9,7 @@ export class SigninPage {
   readonly resendCodeButton: Locator;
   readonly useDifferentEmailButton: Locator;
   readonly verificationCodeInputGroup: Locator;
+  readonly continueAsGuestButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,5 +25,14 @@ export class SigninPage {
     this.verificationCodeInputGroup = page
       .getByRole("group", { name: "Verification code" })
       .locator("input");
+    this.continueAsGuestButton = page.getByRole("button", {
+      name: "Continue as guest",
+    });
+  }
+
+  async continueAsGuest(page: Page) {
+    await page.goto(`${URLS.BASE_URL}/signin`);
+    await this.continueAsGuestButton.click();
+    await page.waitForURL(`${URLS.BASE_URL}/`);
   }
 }

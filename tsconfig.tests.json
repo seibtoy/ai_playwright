@@ -1,11 +1,9 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@pages/*": ["tests/pages/*"],
-      "@helpers/*": ["tests/helpers/*"],
-      "@config/*": ["tests/config/*"]
+      "@/*": ["./*"]
     },
     "types": ["node", "@playwright/test"],
     "moduleResolution": "node"

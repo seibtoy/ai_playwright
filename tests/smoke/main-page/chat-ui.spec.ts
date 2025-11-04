@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { AuthHelper } from "@helpers/index";
-import { ChatPage, Sidebar } from "@pages/index";
+import { AuthHelper } from "@/tests/helpers/save-session";
+import { ChatPage } from "@/tests/pages/chat-page";
 
 test.describe("User interacts with chat UI", () => {
   let chatPage: ChatPage;
@@ -72,138 +72,136 @@ test.describe("Check file attachment", () => {
   });
 });
 
-// test.describe("Check if action buttons in chat works correctly", () => {
-//   let chatPage: ChatPage;
-//   let authHelper: AuthHelper;
+test.describe("Check if action buttons in chat works correctly", () => {
+  let chatPage: ChatPage;
+  let authHelper: AuthHelper;
 
-//   test.beforeEach(async ({ page }) => {
-//     authHelper = new AuthHelper(page);
-//     chatPage = new ChatPage(page);
+  test.beforeEach(async ({ page }) => {
+    authHelper = new AuthHelper(page);
+    chatPage = new ChatPage(page);
 
-//     await authHelper.loginAsMainUser(page);
-//   });
+    await authHelper.loginAsMainUser(page);
+  });
 
-//   test("Verify that action buttons visible and works correctly", async ({
-//     browser,
-//   }, testInfo) => {
-//     const context = await browser.newContext({
-//       permissions: ["clipboard-read", "clipboard-write"],
-//     });
+  test("Verify that action buttons visible and works correctly", async ({
+    browser,
+  }, testInfo) => {
+    const context = await browser.newContext({
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
 
-//     const page = await context.newPage();
+    const page = await context.newPage();
 
-//     const chatPage = new ChatPage(page);
-//     await authHelper.loginAsMainUser(page);
+    const chatPage = new ChatPage(page);
+    await authHelper.loginAsMainUser(page);
 
-//     await test.step("Send message and verify that action buttons visible", async () => {
-//       await chatPage.sendMessage("Hello world", true, testInfo);
+    await test.step("Send message and verify that action buttons visible", async () => {
+      await chatPage.sendMessage("Hello world", true, testInfo);
 
-//       await expect(chatPage.copyButton.first()).toBeVisible();
-//       await expect(chatPage.upvoteButton).toBeVisible();
-//       await expect(chatPage.downvoteButton).toBeVisible();
-//     });
+      await expect(chatPage.copyButton.first()).toBeVisible();
+      await expect(chatPage.upvoteButton).toBeVisible();
+      await expect(chatPage.downvoteButton).toBeVisible();
+    });
 
-//     await test.step("Click on upvote button and verify that it is disabled", async () => {
-//       await chatPage.upvoteButton.click();
-//       await expect(chatPage.upvoteButton).toHaveAttribute("disabled");
-//     });
+    await test.step("Click on upvote button and verify that it is disabled", async () => {
+      await chatPage.upvoteButton.click();
+      await expect(chatPage.upvoteButton).toHaveAttribute("disabled");
+    });
 
-//     await test.step("Click on downvote button and verify that it is disabled", async () => {
-//       await chatPage.downvoteButton.click();
-//       await expect(chatPage.downvoteButton).toHaveAttribute("disabled");
-//     });
+    await test.step("Click on downvote button and verify that it is disabled", async () => {
+      await chatPage.downvoteButton.click();
+      await expect(chatPage.downvoteButton).toHaveAttribute("disabled");
+    });
 
-//     await test.step("Click on copy button and verify that message is copied", async () => {
-//       const content = chatPage.messageContent.last();
-//       const expectedContent = await content.textContent();
+    await test.step("Click on copy button and verify that message is copied", async () => {
+      const content = chatPage.messageContent.last();
+      const expectedContent = await content.textContent();
 
-//       await chatPage.copyButton.click();
+      await chatPage.copyButton.click();
 
-//       const clipboardText = await page.evaluate(() =>
-//         navigator.clipboard.readText()
-//       );
-//       expect(clipboardText.trim()).toBe(expectedContent!.trim());
-//     });
+      const clipboardText = await page.evaluate(() =>
+        navigator.clipboard.readText()
+      );
+      expect(clipboardText.trim()).toBe(expectedContent!.trim());
+    });
 
-//     await context.close();
-//   });
-// });
+    await context.close();
+  });
+});
 
-// test.describe("Check if privacy functionality works correctly", () => {
-//   let chatPage: ChatPage;
-//   let authHelper: AuthHelper;
+test.describe("Check if privacy functionality works correctly", () => {
+  let chatPage: ChatPage;
+  let authHelper: AuthHelper;
 
-//   test.beforeEach(async ({ page }) => {
-//     authHelper = new AuthHelper(page);
-//     chatPage = new ChatPage(page);
+  test.beforeEach(async ({ page }) => {
+    authHelper = new AuthHelper(page);
+    chatPage = new ChatPage(page);
 
-//     await authHelper.loginAsMainUser(page);
-//   });
+    await authHelper.loginAsMainUser(page);
+  });
 
-//   test("Verify that other users can't see private chat", async ({
-//     page,
-//   }, testInfo) => {
-//     let chatUrl: string;
+  test("Verify that other users can't see private chat", async ({
+    page,
+  }, testInfo) => {
+    let chatUrl: string;
 
-//     await test.step("Check that the private button is visible", async () => {
-//       await expect(chatPage.privateButton).toBeVisible();
-//     });
+    await test.step("Check that the private button is visible", async () => {
+      await expect(chatPage.privateButton).toBeVisible();
+    });
 
-//     await test.step("Send message to create the new chat and get the chat url", async () => {
-//       await chatPage.sendMessage("Hello world", true, testInfo);
-//       chatUrl = page.url();
-//     });
+    await test.step("Send message to create the new chat and get the chat url", async () => {
+      await chatPage.sendMessage("Hello world", true, testInfo);
+      chatUrl = page.url();
+    });
 
-//     await test.step("Logout from main account", async () => {
-//       await chatPage.logout();
-//     });
+    await test.step("Logout from main account", async () => {
+      await chatPage.logout();
+    });
 
-//     await test.step("Login as test user", async () => {
-//       await authHelper.loginAsTestUser(page);
-//     });
+    await test.step("Login as test user", async () => {
+      await authHelper.loginAsTestUser(page);
+    });
 
-//     await test.step("Open the chat url and verify that the chat is private", async () => {
-//       await page.goto(chatUrl);
-//       await expect(chatPage.pageNotFoundText).toBeVisible();
-//     });
-//   });
+    await test.step("Open the chat url and verify that the chat is private", async () => {
+      await page.goto(chatUrl);
+      await expect(chatPage.pageNotFoundText).toBeVisible();
+    });
+  });
 
-//   test("Verify that other users can see public chat", async ({
-//     page,
-//   }, testInfo) => {
-//     let chatUrl: string;
+  test("Verify that other users can see public chat", async ({
+    page,
+  }, testInfo) => {
+    let chatUrl: string;
 
-//     await test.step("Check that the private button is visible", async () => {
-//       await expect(chatPage.privateButton).toBeVisible();
-//     });
+    await test.step("Check that the private button is visible", async () => {
+      await expect(chatPage.privateButton).toBeVisible();
+    });
 
-//     await test.step("Send message to create the new chat and get the chat url", async () => {
-//       await chatPage.sendMessage("Hello world", true, testInfo);
-//       chatUrl = page.url();
-//     });
+    await test.step("Send message to create the new chat and get the chat url", async () => {
+      await chatPage.sendMessage("Hello world", true, testInfo);
+      chatUrl = page.url();
+    });
 
-//     await test.step("Change chat privace from private to public", async () => {
-//       await chatPage.privateButton.click();
-//       await page
-//         .getByRole("menuitem", { name: "Public Anyone with the link" })
-//         .click();
-//       await expect(chatPage.publicButton).toBeVisible();
-//       await page.waitForTimeout(5000);
-//     });
+    await test.step("Change chat privace from private to public", async () => {
+      await chatPage.privateButton.click();
+      await page
+        .getByRole("menuitem", { name: "Public Anyone with the link" })
+        .click();
+      await expect(chatPage.publicButton).toBeVisible();
+      await page.waitForTimeout(5000);
+    });
 
-//     await test.step("Logout from main account", async () => {
-//       await chatPage.logout();
-//     });
+    await test.step("Logout from main account", async () => {
+      await chatPage.logout();
+    });
 
-//     await test.step("Login as test user", async () => {
-//       await authHelper.loginAsTestUser(page);
-//     });
+    await test.step("Login as test user", async () => {
+      await authHelper.loginAsTestUser(page);
+    });
 
-//     await test.step("Open the chat url and verify that the chat is private", async () => {
-//       await page.goto(chatUrl);
-//       await expect(chatPage.messageContent.last()).toBeVisible();
-//     });
-//   });
-// });
-
-// to fix
+    await test.step("Open the chat url and verify that the chat is private", async () => {
+      await page.goto(chatUrl);
+      await expect(chatPage.messageContent.last()).toBeVisible();
+    });
+  });
+});

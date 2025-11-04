@@ -4,7 +4,7 @@ import {
   expect,
   type TestInfo,
 } from "@playwright/test";
-import { Sidebar } from "./sidebar-component";
+import { Sidebar } from "@/tests/pages/sidebar-component";
 
 export class ChatPage extends Sidebar {
   readonly input: Locator;

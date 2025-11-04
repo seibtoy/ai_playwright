@@ -1,6 +1,6 @@
 import { test } from "@playwright/test";
-import { AuthHelper } from "@helpers/index";
-import { ChatPage } from "@pages/index";
+import { AuthHelper } from "@/tests/helpers/save-session";
+import { ChatPage } from "@/tests/pages/chat-page";
 
 test.describe("Chat optimization", () => {
   let chatPage: ChatPage;

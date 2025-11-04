@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { AuthHelper } from "@helpers/index";
-import { ChatPage } from "@pages/index";
-import { ENV } from "@config/env";
+import { AuthHelper } from "@/tests/helpers/save-session";
+import { ChatPage } from "@/tests/pages/chat-page";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
   let sidebar: ChatPage;
@@ -72,7 +72,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
   }) => {
     await test.step("Logo image redirects to the main page", async () => {
       await sidebar.logoLink.click();
-      await expect(page).toHaveURL("/");
+      await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
     });
 
     await test.step("Take the Assessment button redirects to proper link", async () => {
@@ -82,7 +82,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
       const currentUrl = new URL(TaketheAssessmentPage.url());
       const expectedUrl = new URL(
-        `${ENV.AI_LEADERSHIP_URL!}/ai-leader-benchmark`
+        `${URLS.AI_LEADERSHIP_URL}/ai-leader-benchmark`
       );
 
       expect(`${currentUrl.origin}${currentUrl.pathname}`).toBe(
@@ -94,7 +94,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
     await test.step("Run the Business button redirects to proper link", async () => {
       await sidebar.runBusinessLink.click();
-      await expect(page).toHaveURL("/run-the-business");
+      await expect(page).toHaveURL(`${URLS.BASE_URL}/run-the-business`);
     });
   });
 
@@ -133,23 +133,29 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     await test.step("Terms of Service", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Terms of Service",
-        `${ENV.AI_LEADERSHIP_URL!}/legal/aitp-terms-of-service`
+        `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
       );
     });
 
     await test.step("Privacy Policy", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Privacy Policy",
-        `${ENV.AI_LEADERSHIP_URL!}/privacy-policy`
+        `${URLS.AI_LEADERSHIP_URL}/privacy-policy`
       );
     });
 
     await test.step("My Account", async () => {
-      await sidebar.clickMenuLinkAndAssertRedirect("My Account", "/profile");
+      await sidebar.clickMenuLinkAndAssertRedirect(
+        "My Account",
+        `${URLS.BASE_URL}/profile`
+      );
     });
 
     await test.step("Logout", async () => {
-      await sidebar.clickMenuLinkAndAssertRedirect("Sign out", "/signin");
+      await sidebar.clickMenuLinkAndAssertRedirect(
+        "Sign out",
+        `${URLS.BASE_URL}/signin`
+      );
     });
   });
 });
@@ -195,5 +201,14 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
         page.getByRole("menuitem", { name: "Delete" })
       ).toBeVisible();
     });
+  });
+});
+
+test.describe("Verifies all sidebar components and their behavior in case when user is guest", () => {
+  let sidebar: ChatPage;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${URLS.BASE_URL}/signin`);
+    sidebar = new ChatPage(page);
   });
 });

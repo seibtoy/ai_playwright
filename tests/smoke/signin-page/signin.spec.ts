@@ -1,13 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { generateEmail, AuthHelper } from "@helpers/index";
-import { SigninPage, ChatPage } from "@pages/index";
-import { ENV } from "@config/env";
+import { generateEmail } from "@/tests/helpers/generate-email";
+import { AuthHelper } from "@/tests/helpers/save-session";
+import { SigninPage } from "@/tests/pages/signin-page";
+import { ChatPage } from "@/tests/pages/chat-page";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("UI elements before email submission", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/signin");
+    await page.goto(`${URLS.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -39,8 +41,10 @@ test.describe("UI elements before email submission", () => {
     const newPage = await newPagePromise;
 
     await expect(newPage).toHaveURL(
-      `${ENV.AI_LEADERSHIP_URL!}/legal/aitp-terms-of-service`
+      `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
     );
+
+    await newPage.close();
   });
 
   test("The 'Send verification code' button should be inactive until the email is valid.", async ({
@@ -55,13 +59,21 @@ test.describe("UI elements before email submission", () => {
 
     await expect(signinPage.sendCodeButton).toBeEnabled();
   });
+
+  test("The 'Continue as guest' button should be visible and active", async ({
+    page,
+  }) => {
+    await expect(signinPage.continueAsGuestButton).toBeVisible();
+    await expect(signinPage.continueAsGuestButton).toBeEnabled();
+    await expect(page.getByText("Try our AI BTS™ features")).toBeVisible();
+  });
 });
 
 test.describe("UI elements after email submission", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/signin");
+    await page.goto(`${URLS.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -103,7 +115,7 @@ test.describe("Email verification code API requests", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/signin");
+    await page.goto(`${URLS.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -130,7 +142,7 @@ test.describe("Email verification code API requests", () => {
 
     await expect(signinPage.resendCodeButton).toBeVisible();
 
-    const responsePromise = page.waitForResponse("**/signin");
+    const responsePromise = page.waitForResponse(`${URLS.BASE_URL}/signin`);
 
     await signinPage.resendCodeButton.click();
 
@@ -152,60 +164,87 @@ test.describe("Smoke check log out", () => {
     browser,
   }) => {
     const context = await browser.newContext();
-    const page = await context.newPage();
-    const authHelper = new AuthHelper(page);
+    try {
+      const page = await context.newPage();
+      const authHelper = new AuthHelper(page);
 
-    await test.step("Login", async () => {
-      await authHelper.loginAsMainUser(page);
-    });
+      await test.step("Login", async () => {
+        await authHelper.loginAsMainUser(page);
+      });
 
-    await test.step("Close the app", async () => {
-      await page.close();
-    });
+      await test.step("Close the app", async () => {
+        await page.close();
+      });
 
-    await test.step("Open the app again and check if user is logged in", async () => {
-      const newPage = await context.newPage();
-      await newPage.goto("/");
-      await expect(newPage).toHaveURL("/");
-    });
+      await test.step("Open the app again and check if user is logged in", async () => {
+        const newPage = await context.newPage();
+        await newPage.goto(`${URLS.BASE_URL}/`);
+        await expect(newPage).toHaveURL(`${URLS.BASE_URL}/`);
+      });
+    } finally {
+      await context.close();
+    }
   });
 
   test("Check if user is logged out after closing the app after logout", async ({
     browser,
   }) => {
     const context = await browser.newContext();
-    let page = await context.newPage();
-    const authHelper = new AuthHelper(page);
+    try {
+      let page = await context.newPage();
+      const authHelper = new AuthHelper(page);
 
-    await test.step("Login", async () => {
-      await authHelper.loginAsMainUser(page);
-    });
+      await test.step("Login", async () => {
+        await authHelper.loginAsMainUser(page);
+      });
 
-    await test.step("Close the app", async () => {
-      await page.close();
-    });
+      await test.step("Close the app", async () => {
+        await page.close();
+      });
 
-    await test.step("Open the app again and check if user is logged in", async () => {
-      page = await context.newPage();
-      sidebar = new ChatPage(page);
-      await page.goto("/");
-      await expect(page).toHaveURL("/");
-    });
+      await test.step("Open the app again and check if user is logged in", async () => {
+        page = await context.newPage();
+        sidebar = new ChatPage(page);
+        await page.goto(`${URLS.BASE_URL}/`);
+        await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
+      });
 
-    await test.step("Logout", async () => {
-      await sidebar.clickMenuLinkAndAssertRedirect("Sign out", "/signin");
-      await expect(page).toHaveURL(`/signin`);
-    });
+      await test.step("Logout", async () => {
+        await sidebar.clickMenuLinkAndAssertRedirect(
+          "Sign out",
+          `${URLS.BASE_URL}/signin`
+        );
+        await expect(page).toHaveURL(`${URLS.BASE_URL}/signin`);
+      });
 
-    await test.step("Close the app", async () => {
-      await page.close();
-    });
+      await test.step("Close the app", async () => {
+        await page.close();
+      });
 
-    await test.step("Open the app again and check if user is logged out", async () => {
-      page = await context.newPage();
-      sidebar = new ChatPage(page);
-      await page.goto("/");
-      await expect(page).toHaveURL("/signin");
-    });
+      await test.step("Open the app again and check if user is logged out", async () => {
+        page = await context.newPage();
+        sidebar = new ChatPage(page);
+        await page.goto(`${URLS.BASE_URL}/`);
+        await expect(page).toHaveURL(`${URLS.BASE_URL}/signin`);
+      });
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+test.describe("Continue as guest", () => {
+  let signinPage: SigninPage;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${URLS.BASE_URL}/signin`);
+    signinPage = new SigninPage(page);
+  });
+
+  test("Should redirect to the main page after clicking the 'Continue as guest' button", async ({
+    page,
+  }) => {
+    await signinPage.continueAsGuest(page);
+    await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
   });
 });
