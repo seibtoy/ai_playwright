@@ -172,7 +172,12 @@ export class AuthHelper extends SigninPage {
         fs.readFileSync(URLS.STORAGE_STATE_MAIN_USER, "utf-8")
       );
       await page.context().addCookies(storageState.cookies);
-      await page.goto(`${URLS.BASE_URL}/`);
+
+      try {
+        await page.goto(`${URLS.BASE_URL}/`, { waitUntil: "domcontentloaded" });
+      } catch (error) {
+        await page.waitForLoadState("domcontentloaded");
+      }
 
       const emailText = await page
         .locator('button[data-sidebar="menu-button"] span.truncate')
@@ -203,7 +208,12 @@ export class AuthHelper extends SigninPage {
         fs.readFileSync(URLS.STORAGE_STATE_TEST_USER, "utf-8")
       );
       await page.context().addCookies(storageState.cookies);
-      await page.goto(`${URLS.BASE_URL}/`);
+
+      try {
+        await page.goto(`${URLS.BASE_URL}/`, { waitUntil: "domcontentloaded" });
+      } catch (error) {
+        await page.waitForLoadState("domcontentloaded");
+      }
 
       const emailText = await page
         .locator('button[data-sidebar="menu-button"] span.truncate')

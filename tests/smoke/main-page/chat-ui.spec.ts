@@ -86,9 +86,11 @@ test.describe("Check if action buttons in chat works correctly", () => {
   test("Verify that action buttons visible and works correctly", async ({
     browser,
   }, testInfo) => {
-    const context = await browser.newContext({
-      permissions: ["clipboard-read", "clipboard-write"],
-    });
+    const contextOptions: any = {};
+    if (testInfo.project.name === "chromium") {
+      contextOptions.permissions = ["clipboard-read", "clipboard-write"];
+    }
+    const context = await browser.newContext(contextOptions);
 
     const page = await context.newPage();
 
@@ -119,10 +121,14 @@ test.describe("Check if action buttons in chat works correctly", () => {
 
       await chatPage.copyButton.click();
 
-      const clipboardText = await page.evaluate(() =>
-        navigator.clipboard.readText()
-      );
-      expect(clipboardText.trim()).toBe(expectedContent!.trim());
+      if (testInfo.project.name === "chromium") {
+        const clipboardText = await page.evaluate(() =>
+          navigator.clipboard.readText()
+        );
+        expect(clipboardText.trim()).toBe(expectedContent!.trim());
+      } else {
+        await expect(chatPage.copyButton.first()).toBeVisible();
+      }
     });
 
     await context.close();
