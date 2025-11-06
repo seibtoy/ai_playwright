@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { AuthHelper } from "@/tests/helpers/save-session";
 import { ChatPage } from "@/tests/pages/chat-page";
+import { SigninPage } from "@/tests/pages/signin-page";
 
 test.describe("User interacts with chat UI", () => {
   let chatPage: ChatPage;
@@ -205,9 +206,40 @@ test.describe("Check if privacy functionality works correctly", () => {
       await authHelper.loginAsTestUser(page);
     });
 
-    await test.step("Open the chat url and verify that the chat is private", async () => {
+    await test.step("Open the chat url and verify that the chat is public", async () => {
       await page.goto(chatUrl);
       await expect(chatPage.messageContent.last()).toBeVisible();
+      await expect(chatPage.input).not.toBeVisible();
+    });
+  });
+});
+
+test.describe("Check if user guest can access includes up to 5 chats", () => {
+  let chatPage: ChatPage;
+  let signinPage: SigninPage;
+
+  test.beforeEach(async ({ page }) => {
+    chatPage = new ChatPage(page);
+    signinPage = new SigninPage(page);
+
+    await signinPage.continueAsGuest(page);
+  });
+
+  test("Verify that user guest can access includes up to 5 chats", async ({
+    page,
+  }, testInfo) => {
+    await test.step("Check that the chat input is visible", async () => {
+      await expect(chatPage.input).toBeVisible();
+    });
+
+    await test.step("Create 5 chats and send messages to each chat", async () => {
+      for (let i = 0; i < 5; i++) {
+        await chatPage.newChatButton.click();
+
+        await expect(page.getByText("Hello there!")).toBeVisible();
+
+        await chatPage.sendMessage("Test message", true, testInfo);
+      }
     });
   });
 });

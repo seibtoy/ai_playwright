@@ -179,12 +179,21 @@ export class AuthHelper extends SigninPage {
         await page.waitForLoadState("domcontentloaded");
       }
 
-      const emailText = await page
-        .locator('button[data-sidebar="menu-button"] span.truncate')
-        .textContent();
-      if (emailText) {
-        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
-      } else {
+      // Wait for the sidebar menu button to be visible before reading email
+      const menuButtonLocator = page.locator(
+        'button[data-sidebar="menu-button"] span.truncate'
+      );
+      try {
+        await menuButtonLocator.waitFor({ state: "visible", timeout: 10000 });
+        const emailText = await menuButtonLocator.textContent();
+        if (emailText) {
+          AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+        } else {
+          AuthHelper.currentUserInbox = inbox;
+        }
+      } catch (error) {
+        // If element is not found, cookies might be expired, fall back to inbox
+        console.log("Menu button not found, using inbox email address");
         AuthHelper.currentUserInbox = inbox;
       }
       return;
@@ -215,12 +224,21 @@ export class AuthHelper extends SigninPage {
         await page.waitForLoadState("domcontentloaded");
       }
 
-      const emailText = await page
-        .locator('button[data-sidebar="menu-button"] span.truncate')
-        .textContent();
-      if (emailText) {
-        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
-      } else {
+      // Wait for the sidebar menu button to be visible before reading email
+      const menuButtonLocator = page.locator(
+        'button[data-sidebar="menu-button"] span.truncate'
+      );
+      try {
+        await menuButtonLocator.waitFor({ state: "visible", timeout: 10000 });
+        const emailText = await menuButtonLocator.textContent();
+        if (emailText) {
+          AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+        } else {
+          AuthHelper.currentUserInbox = inbox;
+        }
+      } catch (error) {
+        // If element is not found, cookies might be expired, fall back to inbox
+        console.log("Menu button not found, using inbox email address");
         AuthHelper.currentUserInbox = inbox;
       }
       return;

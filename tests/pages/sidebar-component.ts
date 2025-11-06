@@ -2,6 +2,13 @@ import { type Page, type Locator, expect } from "@playwright/test";
 
 export class Sidebar {
   protected readonly page: Page;
+  // user is guest
+  readonly createAccountButton: Locator;
+  readonly toggleThemeButton: Locator;
+  readonly termsOfServiceLink: Locator;
+  readonly verificationCodeInputGroup: Locator;
+
+  // user is logged in
   readonly logoLink: Locator;
   readonly takeAssessmentLink: Locator;
   readonly runBusinessLink: Locator;
@@ -20,6 +27,20 @@ export class Sidebar {
 
   constructor(page: Page) {
     this.page = page;
+
+    // user is guest
+    this.createAccountButton = page.getByRole("button", {
+      name: "Sign In / Create Account",
+    });
+    this.toggleThemeButton = page.getByRole("button", { name: "Toggle theme" });
+    this.termsOfServiceLink = page.getByRole("link", {
+      name: "Terms of Service",
+    });
+    this.verificationCodeInputGroup = page.getByRole("group", {
+      name: "Verification code",
+    });
+
+    // user is logged
     this.logoLink = page.getByRole("link", { name: "AI Thought Partner™" });
     this.takeAssessmentLink = page.getByRole("link", {
       name: "Take the Assessment",

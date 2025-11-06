@@ -34,5 +34,7 @@ export class SigninPage {
     await page.goto(`${URLS.BASE_URL}/signin`);
     await this.continueAsGuestButton.click();
     await page.waitForURL(`${URLS.BASE_URL}/`);
+
+    await page.waitForLoadState("domcontentloaded");
   }
 }
