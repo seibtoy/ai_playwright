@@ -1,7 +1,13 @@
 import { type Page, type Locator, expect } from "@playwright/test";
+import { URLS } from "../config/urls";
 
 export class Sidebar {
   protected readonly page: Page;
+  readonly createAccountButton: Locator;
+  readonly toggleThemeButton: Locator;
+  readonly termsOfServiceLink: Locator;
+  readonly verificationCodeInputGroup: Locator;
+
   readonly logoLink: Locator;
   readonly takeAssessmentLink: Locator;
   readonly runBusinessLink: Locator;
@@ -20,6 +26,18 @@ export class Sidebar {
 
   constructor(page: Page) {
     this.page = page;
+
+    this.createAccountButton = page.getByRole("button", {
+      name: "Sign In / Create Account",
+    });
+    this.toggleThemeButton = page.getByRole("button", { name: "Toggle theme" });
+    this.termsOfServiceLink = page.getByRole("link", {
+      name: "Terms of Service",
+    });
+    this.verificationCodeInputGroup = page.getByRole("group", {
+      name: "Verification code",
+    });
+
     this.logoLink = page.getByRole("link", { name: "AI Thought Partner™" });
     this.takeAssessmentLink = page.getByRole("link", {
       name: "Take the Assessment",
@@ -82,5 +100,6 @@ export class Sidebar {
   async logout() {
     await this.openSettings();
     await this.page.getByRole("menuitem", { name: "Sign out" }).click();
+    await this.page.waitForURL(`${URLS.BASE_URL}/signin`, { timeout: 1500 });
   }
 }

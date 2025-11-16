@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { AuthHelper } from "@/tests/helpers/save-session";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { URLS } from "@/tests/config/urls";
+import { SigninPage } from "@/tests/pages/signin-page";
+import { generateEmail } from "@/tests/helpers/generate-email";
 
 test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
   let sidebar: ChatPage;
@@ -163,9 +165,11 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 test.describe("Verifies all sidebar components and their behavior when chats started", () => {
   let sidebar: ChatPage;
   let authHelper: AuthHelper;
+  let chatPage: ChatPage;
 
   test.beforeEach(async ({ page }) => {
     authHelper = new AuthHelper(page);
+    chatPage = new ChatPage(page);
     sidebar = new ChatPage(page);
 
     await authHelper.loginAsMainUser(page);
@@ -204,11 +208,103 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
   });
 });
 
-test.describe("Verifies all sidebar components and their behavior in case when user is guest", () => {
+test.describe("Verifies all sidebar components and their behavior in case when user IS GUEST", () => {
   let sidebar: ChatPage;
+  let signinPage: SigninPage;
+  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    authHelper = new AuthHelper(page);
     sidebar = new ChatPage(page);
+    signinPage = new SigninPage(page);
+
+    await signinPage.continueAsGuest(page);
+  });
+
+  test("Verifies the sidebar UI elements", async ({ page }) => {
+    await expect(page.getByText("Strategy & Tools")).toBeVisible();
+    await expect(sidebar.runBusinessLink).toBeVisible();
+    await expect(page.getByText("You are using the guest")).toBeVisible();
+    await expect(sidebar.createAccountButton).toBeVisible();
+    await expect(sidebar.toggleThemeButton).toBeVisible();
+  });
+
+  test("Verifies that 'Run the Business' button redirects to the proper page", async ({
+    page,
+  }) => {
+    await sidebar.runBusinessLink.click();
+    await expect(page).toHaveURL(`${URLS.BASE_URL}/run-the-business`);
+  });
+
+  test("Verifies that theme mode can be toggled", async ({ page }) => {
+    const theme = await sidebar.getTheme();
+
+    if (theme === "dark") {
+      await sidebar.toggleThemeButton.click();
+
+      const newTheme = await sidebar.getTheme();
+      expect(newTheme).toBe("light");
+
+      await sidebar.toggleThemeButton.click();
+      const newNewTheme = await sidebar.getTheme();
+      expect(newNewTheme).toBe("dark");
+    } else {
+      await sidebar.toggleThemeButton.click();
+
+      const newTheme = await sidebar.getTheme();
+      expect(newTheme).toBe("dark");
+
+      await sidebar.toggleThemeButton.click();
+      const newNewTheme = await sidebar.getTheme();
+      expect(newNewTheme).toBe("light");
+    }
+  });
+
+  test("Verifies that 'Sign in / Create account' button opens the sign in modal and all components are visible", async ({
+    page,
+  }) => {
+    await test.step("Click the 'Sign in / Create account' button and open the sign in modal", async () => {
+      await sidebar.createAccountButton.click();
+      await expect(
+        page.getByRole("dialog", { name: "Sign in to AITP" })
+      ).toBeVisible();
+    });
+
+    await test.step("Check all components are visible", async () => {
+      await expect(page.getByText("Sign in to AITPEnter your")).toBeVisible();
+      await expect(page.getByText("Email Address")).toBeVisible();
+      await expect(signinPage.emailInput).toBeVisible();
+      await expect(signinPage.sendCodeButton).toBeVisible();
+      await expect(page.getByText("New here? We'll create your")).toBeVisible();
+      await expect(page.getByText("By continuing, you agree to")).toBeVisible();
+    });
+
+    await test.step("Check that 'Terms of Service' link leads to the proper page", async () => {
+      const newPagePromise = page.waitForEvent("popup");
+
+      await sidebar.termsOfServiceLink.click();
+      const newPage = await newPagePromise;
+
+      await expect(newPage).toHaveURL(
+        `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+      );
+
+      await newPage.close();
+    });
+  });
+
+  test("Verifies that user can sign in with email in 'Sign in / Create account' modal", async () => {
+    await test.step("Click the 'Sign in / Create account' button and open the sign in modal", async () => {
+      await sidebar.createAccountButton.click();
+    });
+
+    // We dont authenticate fully here, to economize mailSlurp API resources
+    await test.step("Fill in the email input and click the 'Send code' button", async () => {
+      const email = generateEmail();
+      await signinPage.emailInput.fill(email);
+      await expect(signinPage.sendCodeButton).toBeEnabled();
+      await signinPage.sendCodeButton.click();
+      await expect(sidebar.verificationCodeInputGroup).toBeVisible();
+    });
   });
 });

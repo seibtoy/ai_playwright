@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { AuthHelper } from "@/tests/helpers/save-session";
 import { ChatPage } from "@/tests/pages/chat-page";
+import { SigninPage } from "@/tests/pages/signin-page";
 
 test.describe("User interacts with chat UI", () => {
   let chatPage: ChatPage;
@@ -130,7 +131,6 @@ test.describe("Check if action buttons in chat works correctly", () => {
         await expect(chatPage.copyButton.first()).toBeVisible();
       }
     });
-
     await context.close();
   });
 });
@@ -146,9 +146,7 @@ test.describe("Check if privacy functionality works correctly", () => {
     await authHelper.loginAsMainUser(page);
   });
 
-  test("Verify that other users can't see private chat", async ({
-    page,
-  }, testInfo) => {
+  test("Verify that other users can't see private chat", async ({ page }) => {
     let chatUrl: string;
 
     await test.step("Check that the private button is visible", async () => {
@@ -156,7 +154,7 @@ test.describe("Check if privacy functionality works correctly", () => {
     });
 
     await test.step("Send message to create the new chat and get the chat url", async () => {
-      await chatPage.sendMessage("Hello world", true, testInfo);
+      await chatPage.sendMessageViaAPI("Hello world");
       chatUrl = page.url();
     });
 
@@ -174,9 +172,7 @@ test.describe("Check if privacy functionality works correctly", () => {
     });
   });
 
-  test("Verify that other users can see public chat", async ({
-    page,
-  }, testInfo) => {
+  test("Verify that other users can see public chat", async ({ page }) => {
     let chatUrl: string;
 
     await test.step("Check that the private button is visible", async () => {
@@ -184,7 +180,7 @@ test.describe("Check if privacy functionality works correctly", () => {
     });
 
     await test.step("Send message to create the new chat and get the chat url", async () => {
-      await chatPage.sendMessage("Hello world", true, testInfo);
+      await chatPage.sendMessageViaAPI("Hello world");
       chatUrl = page.url();
     });
 
@@ -194,7 +190,7 @@ test.describe("Check if privacy functionality works correctly", () => {
         .getByRole("menuitem", { name: "Public Anyone with the link" })
         .click();
       await expect(chatPage.publicButton).toBeVisible();
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(300);
     });
 
     await test.step("Logout from main account", async () => {
@@ -205,9 +201,67 @@ test.describe("Check if privacy functionality works correctly", () => {
       await authHelper.loginAsTestUser(page);
     });
 
-    await test.step("Open the chat url and verify that the chat is private", async () => {
+    await test.step("Open the chat url and verify that the chat is public", async () => {
       await page.goto(chatUrl);
       await expect(chatPage.messageContent.last()).toBeVisible();
     });
+  });
+});
+
+test.describe("Check if USER GUEST can create up to 5 chats", () => {
+  test("Verify that user guest can create up to 5 chats", async ({
+    browser,
+  }) => {
+    let chatPage: ChatPage;
+    let signinPage: SigninPage;
+
+    const context = await browser.newContext();
+    const newPage = await context.newPage();
+
+    try {
+      chatPage = new ChatPage(newPage);
+      signinPage = new SigninPage(newPage);
+
+      await signinPage.continueAsGuest(newPage);
+
+      test.setTimeout(100000);
+      await test.step("Check that the input is visible", async () => {
+        await expect(chatPage.input).toBeVisible();
+      });
+
+      await test.step("Create 5 chats", async () => {
+        for (let i = 0; i < 5; i++) {
+          await chatPage.createNewChat();
+          const response = await chatPage.sendMessageViaAPI("Testing message");
+          expect(response.status()).toBe(200);
+        }
+      });
+
+      await test.step("Trying to create 6th chat", async () => {
+        await chatPage.createNewChat();
+        await chatPage.input.fill("Last message");
+        await expect(chatPage.sendButton).toBeEnabled();
+      });
+
+      await test.step("Verify that the chat is not created and return 403 error", async () => {
+        const [response] = await Promise.all([
+          newPage.waitForResponse(
+            (response) =>
+              response.url().includes("/api/chat") &&
+              response.request().method() === "POST"
+          ),
+          chatPage.sendButton.click(),
+        ]);
+        expect(response.status()).toBe(403);
+
+        await expect(
+          newPage
+            .getByLabel("Notifications alt+T")
+            .getByText("Guest accounts are limited to")
+        ).toBeVisible();
+      });
+    } finally {
+      await context.close();
+    }
   });
 });

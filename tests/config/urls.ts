@@ -9,7 +9,7 @@ export const URLS = Object.freeze({
   STORAGE_STATE_ADMIN: "tests/storage/storage-state-admin.json",
   INBOX_STORAGE_FILE: "tests/storage/inboxes.json",
   MAILSLURP_API_KEY:
-    "a86c424b611e8491442fcddc4cc93b584a24326e35c74af883645e3a00d52fbb",
+    "1a016528a1e0667b2d3e39c5c2e29e1e1a918dbef1ff31ab94a471b247d4c3da",
   MAILSLURP_MAIN_USER_INBOX_NAME: "playwright-main-user",
   MAILSLURP_TEST_USER_INBOX_NAME: "playwright-test-user",
 });

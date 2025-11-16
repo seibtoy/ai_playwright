@@ -72,6 +72,10 @@ export class ChatPage extends Sidebar {
     await expect(this.input).toBeVisible();
     await this.input.click();
     await this.input.fill(message);
+
+    await expect(this.sendButton).toBeVisible();
+    await expect(this.sendButton).toBeEnabled();
+
     await this.sendButton.click();
 
     const recordingButton =
@@ -84,5 +88,37 @@ export class ChatPage extends Sidebar {
       : { state: "visible" as const, timeout: 0 };
 
     await recordingButton.waitFor(options);
+  }
+
+  async sendMessageViaAPI(message: string) {
+    await expect(this.input).toBeVisible();
+    await this.input.click();
+    await this.input.fill(message);
+
+    const [response] = await Promise.all([
+      this.page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/chat") &&
+          response.request().method() === "POST"
+      ),
+      this.sendButton.click(),
+    ]);
+
+    return response;
+  }
+
+  async createNewChat() {
+    const rscPromise = this.page.waitForResponse(
+      (r) => r.url().includes("/?_rsc=") && r.request().method() === "GET"
+    );
+    await this.newChatButton.click();
+    await rscPromise;
+
+    await expect(this.page.getByText("Hello there!")).toBeVisible();
+    await expect(
+      this.page.getByText("What’s top of mind for you")
+    ).toBeVisible();
+
+    await this.page.waitForTimeout(250);
   }
 }

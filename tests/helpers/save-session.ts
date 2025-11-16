@@ -179,12 +179,26 @@ export class AuthHelper extends SigninPage {
         await page.waitForLoadState("domcontentloaded");
       }
 
-      const emailText = await page
-        .locator('button[data-sidebar="menu-button"] span.truncate')
-        .textContent();
-      if (emailText) {
-        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
-      } else {
+      const settingsButton = page.locator(
+        'button[data-sidebar="menu-button"][data-slot="dropdown-menu-trigger"]'
+      );
+
+      try {
+        await settingsButton.waitFor({ state: "visible", timeout: 10000 });
+
+        const emailText = await page
+          .locator('button[data-sidebar="menu-button"] span.truncate')
+          .textContent({ timeout: 5000 });
+
+        if (emailText) {
+          AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+        } else {
+          AuthHelper.currentUserInbox = inbox;
+        }
+      } catch (error) {
+        console.log(
+          "User not logged in or session expired, using inbox email address. If you are in the local environment, try to clear the storage folder."
+        );
         AuthHelper.currentUserInbox = inbox;
       }
       return;
@@ -215,12 +229,26 @@ export class AuthHelper extends SigninPage {
         await page.waitForLoadState("domcontentloaded");
       }
 
-      const emailText = await page
-        .locator('button[data-sidebar="menu-button"] span.truncate')
-        .textContent();
-      if (emailText) {
-        AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
-      } else {
+      const settingsButton = page.locator(
+        'button[data-sidebar="menu-button"][data-slot="dropdown-menu-trigger"]'
+      );
+
+      try {
+        await settingsButton.waitFor({ state: "visible", timeout: 10000 });
+
+        const emailText = await page
+          .locator('button[data-sidebar="menu-button"] span.truncate')
+          .textContent({ timeout: 5000 });
+
+        if (emailText) {
+          AuthHelper.currentUserInbox = { ...inbox, emailAddress: emailText };
+        } else {
+          AuthHelper.currentUserInbox = inbox;
+        }
+      } catch (error) {
+        console.log(
+          "User not logged in or session expired, using inbox email address. If you are in the local environment, try to clear the storage folder."
+        );
         AuthHelper.currentUserInbox = inbox;
       }
       return;
