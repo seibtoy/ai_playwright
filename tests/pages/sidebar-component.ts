@@ -1,5 +1,4 @@
 import { type Page, type Locator, expect } from "@playwright/test";
-import { URLS } from "../config/urls";
 
 export class Sidebar {
   protected readonly page: Page;
@@ -100,6 +99,8 @@ export class Sidebar {
   async logout() {
     await this.openSettings();
     await this.page.getByRole("menuitem", { name: "Sign out" }).click();
-    await this.page.waitForURL(`${URLS.BASE_URL}/signin`, { timeout: 1500 });
+    await this.page.waitForURL(`${process.env.BASE_URL!}/signin`, {
+      timeout: 1500,
+    });
   }
 }

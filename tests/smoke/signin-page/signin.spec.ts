@@ -3,13 +3,12 @@ import { generateEmail } from "@/tests/helpers/generate-email";
 import { AuthHelper } from "@/tests/helpers/save-session";
 import { SigninPage } from "@/tests/pages/signin-page";
 import { ChatPage } from "@/tests/pages/chat-page";
-import { URLS } from "@/tests/config/urls";
 
 test.describe("UI elements before email submission", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -41,7 +40,7 @@ test.describe("UI elements before email submission", () => {
     const newPage = await newPagePromise;
 
     await expect(newPage).toHaveURL(
-      `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+      `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
     );
 
     await newPage.close();
@@ -73,7 +72,7 @@ test.describe("UI elements after email submission", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -115,7 +114,7 @@ test.describe("Email verification code API requests", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -142,7 +141,9 @@ test.describe("Email verification code API requests", () => {
 
     await expect(signinPage.resendCodeButton).toBeVisible();
 
-    const responsePromise = page.waitForResponse(`${URLS.BASE_URL}/signin`);
+    const responsePromise = page.waitForResponse(
+      `${process.env.BASE_URL}/signin`
+    );
 
     await signinPage.resendCodeButton.click();
 
@@ -178,8 +179,8 @@ test.describe("Smoke check log out", () => {
 
       await test.step("Open the app again and check if user is logged in", async () => {
         const newPage = await context.newPage();
-        await newPage.goto(`${URLS.BASE_URL}/`);
-        await expect(newPage).toHaveURL(`${URLS.BASE_URL}/`);
+        await newPage.goto(`${process.env.BASE_URL}/`);
+        await expect(newPage).toHaveURL(`${process.env.BASE_URL}/`);
       });
     } finally {
       await context.close();
@@ -205,16 +206,16 @@ test.describe("Smoke check log out", () => {
       await test.step("Open the app again and check if user is logged in", async () => {
         page = await context.newPage();
         sidebar = new ChatPage(page);
-        await page.goto(`${URLS.BASE_URL}/`);
-        await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
+        await page.goto(`${process.env.BASE_URL}/`);
+        await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
       });
 
       await test.step("Logout", async () => {
         await sidebar.clickMenuLinkAndAssertRedirect(
           "Sign out",
-          `${URLS.BASE_URL}/signin`
+          `${process.env.BASE_URL}/signin`
         );
-        await expect(page).toHaveURL(`${URLS.BASE_URL}/signin`);
+        await expect(page).toHaveURL(`${process.env.BASE_URL}/signin`);
       });
 
       await test.step("Close the app", async () => {
@@ -224,8 +225,8 @@ test.describe("Smoke check log out", () => {
       await test.step("Open the app again and check if user is logged out", async () => {
         page = await context.newPage();
         sidebar = new ChatPage(page);
-        await page.goto(`${URLS.BASE_URL}/`);
-        await expect(page).toHaveURL(`${URLS.BASE_URL}/signin`);
+        await page.goto(`${process.env.BASE_URL}/`);
+        await expect(page).toHaveURL(`${process.env.BASE_URL}/signin`);
       });
     } finally {
       await context.close();
@@ -237,7 +238,7 @@ test.describe("Continue as guest", () => {
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL}/signin`);
     signinPage = new SigninPage(page);
   });
 
@@ -245,6 +246,6 @@ test.describe("Continue as guest", () => {
     page,
   }) => {
     await signinPage.continueAsGuest(page);
-    await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
+    await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
   });
 });

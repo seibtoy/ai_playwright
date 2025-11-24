@@ -74,7 +74,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
   }) => {
     await test.step("Logo image redirects to the main page", async () => {
       await sidebar.logoLink.click();
-      await expect(page).toHaveURL(`${URLS.BASE_URL}/`);
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
     });
 
     await test.step("Take the Assessment button redirects to proper link", async () => {
@@ -84,7 +84,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
       const currentUrl = new URL(TaketheAssessmentPage.url());
       const expectedUrl = new URL(
-        `${URLS.AI_LEADERSHIP_URL}/ai-leader-benchmark`
+        `${process.env.AI_LEADERSHIP_URL}/ai-leader-benchmark`
       );
 
       expect(`${currentUrl.origin}${currentUrl.pathname}`).toBe(
@@ -96,7 +96,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
     await test.step("Run the Business button redirects to proper link", async () => {
       await sidebar.runBusinessLink.click();
-      await expect(page).toHaveURL(`${URLS.BASE_URL}/run-the-business`);
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
     });
   });
 
@@ -135,28 +135,28 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     await test.step("Terms of Service", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Terms of Service",
-        `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
       );
     });
 
     await test.step("Privacy Policy", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Privacy Policy",
-        `${URLS.AI_LEADERSHIP_URL}/privacy-policy`
+        `${process.env.AI_LEADERSHIP_URL}/privacy-policy`
       );
     });
 
     await test.step("My Account", async () => {
       await sidebar.clickMenuLinkAndAssertRedirect(
         "My Account",
-        `${URLS.BASE_URL}/profile`
+        `${process.env.BASE_URL}/profile`
       );
     });
 
     await test.step("Logout", async () => {
       await sidebar.clickMenuLinkAndAssertRedirect(
         "Sign out",
-        `${URLS.BASE_URL}/signin`
+        `${process.env.BASE_URL}/signin`
       );
     });
   });
@@ -233,7 +233,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
     page,
   }) => {
     await sidebar.runBusinessLink.click();
-    await expect(page).toHaveURL(`${URLS.BASE_URL}/run-the-business`);
+    await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
   });
 
   test("Verifies that theme mode can be toggled", async ({ page }) => {
@@ -286,7 +286,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
       const newPage = await newPagePromise;
 
       await expect(newPage).toHaveURL(
-        `${URLS.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
       );
 
       await newPage.close();

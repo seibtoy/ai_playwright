@@ -21,7 +21,7 @@ export class AuthHelper extends SigninPage {
   constructor(page: Page) {
     super(page);
     this.mailslurp = new MailSlurp({
-      apiKey: URLS.MAILSLURP_API_KEY,
+      apiKey: process.env.MAILSLURP_API_KEY!,
     });
     AuthHelper.loadInboxStorage();
   }
@@ -51,7 +51,7 @@ export class AuthHelper extends SigninPage {
 
   private static async initInboxes(): Promise<void> {
     const mailslurp = new MailSlurp({
-      apiKey: URLS.MAILSLURP_API_KEY,
+      apiKey: process.env.MAILSLURP_API_KEY!,
     });
     let hasChanges = false;
 
@@ -60,10 +60,10 @@ export class AuthHelper extends SigninPage {
     });
 
     const mainUserInboxPreview = allInboxes.content?.find(
-      (inbox) => inbox.name === URLS.MAILSLURP_MAIN_USER_INBOX_NAME
+      (inbox) => inbox.name === process.env.MAILSLURP_MAIN_USER_INBOX_NAME!
     );
     const testUserInboxPreview = allInboxes.content?.find(
-      (inbox) => inbox.name === URLS.MAILSLURP_TEST_USER_INBOX_NAME
+      (inbox) => inbox.name === process.env.MAILSLURP_TEST_USER_INBOX_NAME!
     );
 
     if (!AuthHelper.inboxStorage.mainUser) {
@@ -76,7 +76,7 @@ export class AuthHelper extends SigninPage {
       } else {
         AuthHelper.inboxStorage.mainUser =
           await mailslurp.inboxController.createInbox({
-            name: URLS.MAILSLURP_MAIN_USER_INBOX_NAME,
+            name: process.env.MAILSLURP_MAIN_USER_INBOX_NAME!,
           });
         hasChanges = true;
       }
@@ -92,7 +92,7 @@ export class AuthHelper extends SigninPage {
       } else {
         AuthHelper.inboxStorage.testUser =
           await mailslurp.inboxController.createInbox({
-            name: URLS.MAILSLURP_TEST_USER_INBOX_NAME,
+            name: process.env.MAILSLURP_TEST_USER_INBOX_NAME!,
           });
         hasChanges = true;
       }
@@ -104,7 +104,7 @@ export class AuthHelper extends SigninPage {
   }
 
   private async completeLogin(page: Page, inbox: InboxDto) {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL!}/signin`);
 
     const testId = `login-${Date.now()}-${Math.random()
       .toString(36)
@@ -154,7 +154,7 @@ export class AuthHelper extends SigninPage {
       await inputs.nth(i).fill(code[i]);
     }
 
-    await page.waitForURL(`${URLS.BASE_URL}/`);
+    await page.waitForURL(`${process.env.BASE_URL!}/`);
 
     await this.mailslurp.inboxController.deleteAllInboxEmails({
       inboxId: inbox.id,
@@ -174,7 +174,9 @@ export class AuthHelper extends SigninPage {
       await page.context().addCookies(storageState.cookies);
 
       try {
-        await page.goto(`${URLS.BASE_URL}/`, { waitUntil: "domcontentloaded" });
+        await page.goto(`${process.env.BASE_URL!}/`, {
+          waitUntil: "domcontentloaded",
+        });
       } catch (error) {
         await page.waitForLoadState("domcontentloaded");
       }
@@ -224,7 +226,9 @@ export class AuthHelper extends SigninPage {
       await page.context().addCookies(storageState.cookies);
 
       try {
-        await page.goto(`${URLS.BASE_URL}/`, { waitUntil: "domcontentloaded" });
+        await page.goto(`${process.env.BASE_URL!}/`, {
+          waitUntil: "domcontentloaded",
+        });
       } catch (error) {
         await page.waitForLoadState("domcontentloaded");
       }

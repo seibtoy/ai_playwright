@@ -2,7 +2,7 @@ import { test as setup } from "@playwright/test";
 import { URLS } from "@/tests/config/urls";
 
 setup("save admin auth state", async ({ page }) => {
-  await page.goto(`${URLS.BASE_URL}/signin`);
+  await page.goto(`${process.env.BASE_URL!}/signin`);
 
   await page.pause();
 

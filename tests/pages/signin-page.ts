@@ -1,5 +1,4 @@
 import { type Page, type Locator } from "@playwright/test";
-import { URLS } from "@/tests/config/urls";
 
 export class SigninPage {
   readonly page: Page;
@@ -31,8 +30,8 @@ export class SigninPage {
   }
 
   async continueAsGuest(page: Page) {
-    await page.goto(`${URLS.BASE_URL}/signin`);
+    await page.goto(`${process.env.BASE_URL}/signin`);
     await this.continueAsGuestButton.click();
-    await page.waitForURL(`${URLS.BASE_URL}/`);
+    await page.waitForURL(`${process.env.BASE_URL}/`);
   }
 }

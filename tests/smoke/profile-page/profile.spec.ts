@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { ProfilePage } from "@/tests/pages/profile-page";
 import { AuthHelper } from "@/tests/helpers/save-session";
-import { URLS } from "@/tests/config/urls";
 
 test.describe("Verify all profile page elements are visible and work correctly", () => {
   let profilePage: ProfilePage;
@@ -12,7 +11,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
     authHelper = new AuthHelper(page);
 
     await authHelper.loginAsMainUser(page);
-    await page.goto(`${URLS.BASE_URL}/profile`);
+    await page.goto(`${process.env.BASE_URL}/profile`);
   });
 
   test("Verify all profile page elements are visible", async ({ page }) => {

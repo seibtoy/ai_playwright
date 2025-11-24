@@ -1,0 +1,149 @@
+name: Playwright e2e tests after Vercel deploy
+
+on:
+  # Auto-trigger: Vercel sends this after any successful deployment
+  repository_dispatch:
+    types:
+      - "vercel.deployment.success"
+      
+  # Manual trigger: Run tests on-demand against any URL
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "Deployment URL to test (leave empty to use staging)"
+        required: false
+        type: string
+      run_full_suite:
+        description: "Run full test suite instead of just smoke tests"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  run-e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # For auto-trigger: use the deployed commit
+          # For manual: use the current branch
+          ref: ${{ github.event.client_payload.git.sha || github.sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Determine test URL
+        id: test-url
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual trigger
+            if [ -n "${{ github.event.inputs.deployment_url }}" ]; then
+              echo "url=${{ github.event.inputs.deployment_url }}" >> $GITHUB_OUTPUT
+              echo "source=manual-input" >> $GITHUB_OUTPUT
+            else
+              echo "url=https://thought-partner-env-staging-ai-leadership.vercel.app" >> $GITHUB_OUTPUT
+              echo "source=staging-fallback" >> $GITHUB_OUTPUT
+            fi
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            # Auto-trigger from Vercel
+            BRANCH_REF="${{ github.event.client_payload.git.ref }}"
+            TARGET="${{ github.event.client_payload.target }}"
+            
+            # Extract branch name from ref (e.g., refs/heads/main -> main)
+            BRANCH_NAME="${BRANCH_REF#refs/heads/}"
+            
+            echo "Branch: $BRANCH_NAME, Target: $TARGET"
+            
+            # Special case: main branch uses production URL
+            if [ "$BRANCH_NAME" == "main" ] || [ "$TARGET" == "production" ]; then
+              echo "url=https://app.aileadership.com" >> $GITHUB_OUTPUT
+              echo "source=production-main" >> $GITHUB_OUTPUT
+            else
+              # Use the preview deployment URL from Vercel
+              echo "url=${{ github.event.client_payload.url }}" >> $GITHUB_OUTPUT
+              echo "source=vercel-preview" >> $GITHUB_OUTPUT
+              echo "preview-url=${{ github.event.client_payload.url }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            # PR triggers - use staging fallback
+            echo "url=https://thought-partner-env-staging-ai-leadership.vercel.app" >> $GITHUB_OUTPUT
+            echo "source=pr-staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show test configuration
+        run: |
+          echo "🎯 Test Configuration"
+          echo "===================="
+          echo "Event: ${{ github.event_name }}"
+          echo "Test URL: ${{ steps.test-url.outputs.url }}"
+          echo "URL Source: ${{ steps.test-url.outputs.source }}"
+          echo "Commit SHA: ${{ github.event.client_payload.git.sha || github.sha }}"
+          echo ""
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "📦 Vercel Deployment Info:"
+            echo "Target: ${{ github.event.client_payload.target }}"
+            echo "Branch: ${{ github.event.client_payload.git.ref }}"
+            echo "Preview URL: ${{ github.event.client_payload.url }}"
+            echo ""
+            if [ "${{ steps.test-url.outputs.source }}" == "vercel-preview" ]; then
+              echo "🚀 Testing PREVIEW DEPLOYMENT"
+              echo "Preview URL: ${{ steps.test-url.outputs.url }}"
+            elif [ "${{ steps.test-url.outputs.source }}" == "production-main" ]; then
+              echo "🏭 Testing PRODUCTION DEPLOYMENT"
+            fi
+          fi
+
+      - name: Create test directories
+        run: |
+          mkdir -p playwright-report
+          mkdir -p test-results
+
+      - name: Run Playwright Smoke tests
+        if: ${{ github.event.inputs.run_full_suite != true }}
+        env:
+          BASE_URL: ${{ steps.test-url.outputs.url }}
+        run: |
+          echo "🧪 Running SMOKE tests against: $BASE_URL"
+          pnpm exec playwright test tests/smoke --reporter=list,html --workers=2
+
+      - name: Run Full Playwright test suite
+        if: ${{ github.event.inputs.run_full_suite == true }}
+        env:
+          BASE_URL: ${{ steps.test-url.outputs.url }}
+        run: |
+          echo "🧪 Running FULL test suite against: $BASE_URL"
+          pnpm exec playwright test --reporter=list,html --workers=2
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.event.client_payload.git.sha || github.sha }}
+          path: playwright-report/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload test traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ github.event.client_payload.git.sha || github.sha }}
+          path: test-results/
+          retention-days: 30
+          if-no-files-found: warn

@@ -35,7 +35,7 @@ test.describe("Analyze final response time", () => {
 
       await test.step("Login as admin and verify", async () => {
         chatPage = new ChatPage(page);
-        await page.goto(`${URLS.BASE_URL}/`, {
+        await page.goto(`${process.env.BASE_URL}/`, {
           waitUntil: "networkidle",
         });
         await chatPage.openSettings();
@@ -47,18 +47,18 @@ test.describe("Analyze final response time", () => {
         ]);
 
         const currentUrl = page.url();
-        expect(currentUrl).toContain(`${URLS.BASE_URL}/admin`);
+        expect(currentUrl).toContain(`${process.env.BASE_URL}/admin`);
       });
 
       await test.step("Verify the user is in organization", async () => {
-        await page.goto(`${URLS.BASE_URL}/admin/organizations`);
+        await page.goto(`${process.env.BASE_URL}/admin/organizations`);
 
         const rows = page.locator("tr[data-slot='table-row']");
         await expect(rows).toHaveCount(await rows.count());
       });
 
       await test.step("Go to the main page", async () => {
-        await page.goto(`${URLS.BASE_URL}/`, {
+        await page.goto(`${process.env.BASE_URL}/`, {
           waitUntil: "networkidle",
         });
         await expect(chatPage.input).toBeVisible({ timeout: 10000 });
@@ -66,7 +66,7 @@ test.describe("Analyze final response time", () => {
 
       await test.step("Go to the 'Run the business' page and select setuped prompt", async () => {
         await chatPage.runBusinessLink.click();
-        await page.waitForURL(`${URLS.BASE_URL}/run-the-business`, {
+        await page.waitForURL(`${process.env.BASE_URL}/run-the-business`, {
           timeout: 10000,
         });
 
