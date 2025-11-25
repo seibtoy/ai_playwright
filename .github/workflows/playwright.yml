@@ -58,7 +58,7 @@ jobs:
       - name: Determine test URL
         id: test-url
         run: |
-          BRANCH_NAME="${{ github.ref#refs/heads/ }}"
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
 
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.deployment_url }}" ]; then
             echo "url=${{ github.event.inputs.deployment_url }}" >> $GITHUB_OUTPUT
