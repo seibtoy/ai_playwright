@@ -48,13 +48,6 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps
 
-      - name: Load environment variables
-        run: |
-          set -o allexport
-          source .env
-          set +o allexport
-        shell: bash
-
       - name: Determine test URL
         id: test-url
         run: |
