@@ -99,8 +99,8 @@ jobs:
         env:
           BASE_URL: ${{ steps.test-url.outputs.url }}
           MAILSLURP_API_KEY: ${{ secrets.MAILSLURP_API_KEY }}
-          MAILSLURP_MAIN_USER_INBOX_NAME: ${ { secrets.MAILSLURP_MAIN_USER_INBOX_NAME } }
-          MAILSLURP_TEST_USER_INBOX_NAME: ${ { secrets.MAILSLURP_TEST_USER_INBOX_NAME } }
+          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
+          MAILSLURP_TEST_USER_INBOX_NAME: ${{ secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
         run: |
           echo "🧪 Running SMOKE tests against: $BASE_URL"
           pnpm exec playwright test tests/smoke --reporter=list,html --workers=2
