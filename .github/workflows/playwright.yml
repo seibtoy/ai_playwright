@@ -51,20 +51,6 @@ jobs:
       - name: Determine test URL
         id: test-url
         run: |
-          # Function to get variable value (try vars first, then secrets)
-          get_var() {
-            local VAR_NAME="$1"
-            local VAR_VALUE="${{ vars[VAR_NAME] }}"
-            local SECRET_VALUE="${{ secrets[VAR_NAME] }}"
-            if [ -n "$VAR_VALUE" ]; then
-              echo "$VAR_VALUE"
-            elif [ -n "$SECRET_VALUE" ]; then
-              echo "$SECRET_VALUE"
-            else
-              echo ""
-            fi
-          }
-
           # Function to determine URL by branch name
           # Support both vars (Repository Variables) and secrets (Repository Secrets)
           determine_url_by_branch() {
@@ -239,8 +225,8 @@ jobs:
         env:
           BASE_URL: ${{ steps.test-url.outputs.url }}
           MAILSLURP_API_KEY: ${{ secrets.MAILSLURP_API_KEY }}
-          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ vars.MAILSLURP_MAIN_USER_INBOX_NAME != '' && vars.MAILSLURP_MAIN_USER_INBOX_NAME || secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
-          MAILSLURP_TEST_USER_INBOX_NAME: ${{ vars.MAILSLURP_TEST_USER_INBOX_NAME != '' && vars.MAILSLURP_TEST_USER_INBOX_NAME || secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
+          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ vars.MAILSLURP_MAIN_USER_INBOX_NAME || secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
+          MAILSLURP_TEST_USER_INBOX_NAME: ${{ vars.MAILSLURP_TEST_USER_INBOX_NAME || secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
         run: |
           echo "🧪 Running SMOKE tests against: $BASE_URL"
           pnpm exec playwright test tests/smoke --reporter=list,html --workers=2
