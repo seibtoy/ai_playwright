@@ -51,12 +51,31 @@ jobs:
       - name: Determine test URL
         id: test-url
         run: |
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.deployment_url }}" ]; then
             echo "url=${{ github.event.inputs.deployment_url }}" >> $GITHUB_OUTPUT
             echo "source=manual-input" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            # Handle Vercel deployment events
+            VERCEL_URL="${{ github.event.client_payload.url }}"
+            VERCEL_TARGET="${{ github.event.client_payload.target }}"
+            VERCEL_BRANCH="${{ github.event.client_payload.git.ref }}"
+            
+            if [ -n "$VERCEL_URL" ] && [ "$VERCEL_TARGET" != "production" ]; then
+              # Use preview URL for non-production deployments
+              echo "url=$VERCEL_URL" >> $GITHUB_OUTPUT
+              echo "source=vercel-preview" >> $GITHUB_OUTPUT
+            elif [ "$VERCEL_TARGET" == "production" ] || [ "$VERCEL_BRANCH" == "refs/heads/main" ]; then
+              # Use production URL for production deployments
+              echo "url=${{ secrets.PRODUCTION_BASE_URL }}" >> $GITHUB_OUTPUT
+              echo "source=production-main" >> $GITHUB_OUTPUT
+            else
+              # Fallback to staging URL
+              echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+              echo "source=dev-or-feature" >> $GITHUB_OUTPUT
+            fi
           else
+            # For other events, determine by branch
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
             if [ "$BRANCH_NAME" == "main" ]; then
               echo "url=${{ secrets.PRODUCTION_BASE_URL }}" >> $GITHUB_OUTPUT
               echo "source=production-main" >> $GITHUB_OUTPUT
@@ -89,6 +108,21 @@ jobs:
             fi
           fi
 
+      - name: Validate test URL
+        run: |
+          if [ -z "${{ steps.test-url.outputs.url }}" ]; then
+            echo "ERROR: BASE_URL is empty!"
+            echo "Event: ${{ github.event_name }}"
+            echo "URL Source: ${{ steps.test-url.outputs.source }}"
+            if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+              echo "Vercel URL: ${{ github.event.client_payload.url }}"
+              echo "Vercel Target: ${{ github.event.client_payload.target }}"
+              echo "Vercel Branch: ${{ github.event.client_payload.git.ref }}"
+            fi
+            exit 1
+          fi
+          echo "✅ BASE_URL is set: ${{ steps.test-url.outputs.url }}"
+
       - name: Create test directories
         run: |
           mkdir -p playwright-report
@@ -110,8 +144,8 @@ jobs:
         env:
           BASE_URL: ${{ steps.test-url.outputs.url }}
           MAILSLURP_API_KEY: ${{ secrets.MAILSLURP_API_KEY }}
-          MAILSLURP_MAIN_USER_INBOX_NAME: ${ { secrets.MAILSLURP_MAIN_USER_INBOX_NAME } }
-          MAILSLURP_TEST_USER_INBOX_NAME: ${ { secrets.MAILSLURP_TEST_USER_INBOX_NAME } }
+          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
+          MAILSLURP_TEST_USER_INBOX_NAME: ${{ secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
         run: |
           echo "🧪 Running FULL test suite against: $BASE_URL"
           pnpm exec playwright test --reporter=list,html --workers=2
