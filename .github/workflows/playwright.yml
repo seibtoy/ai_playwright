@@ -52,8 +52,13 @@ jobs:
         id: test-url
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.deployment_url }}" ]; then
+            # Manual input takes priority
             echo "url=${{ github.event.inputs.deployment_url }}" >> $GITHUB_OUTPUT
             echo "source=manual-input" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # workflow_dispatch without URL: default to staging
+            echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+            echo "source=workflow-dispatch-default" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
             # Handle Vercel deployment events
             VERCEL_URL="${{ github.event.client_payload.url }}"
@@ -65,9 +70,15 @@ jobs:
               echo "url=$VERCEL_URL" >> $GITHUB_OUTPUT
               echo "source=vercel-preview" >> $GITHUB_OUTPUT
             elif [ "$VERCEL_TARGET" == "production" ] || [ "$VERCEL_BRANCH" == "refs/heads/main" ]; then
-              # Use production URL for production deployments
-              echo "url=${{ secrets.PRODUCTION_BASE_URL }}" >> $GITHUB_OUTPUT
-              echo "source=production-main" >> $GITHUB_OUTPUT
+              # Use production URL for production deployments, with fallback to BASE_URL
+              PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              if [ -n "$PROD_URL" ]; then
+                echo "url=$PROD_URL" >> $GITHUB_OUTPUT
+                echo "source=production-main" >> $GITHUB_OUTPUT
+              else
+                echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+                echo "source=production-fallback-to-staging" >> $GITHUB_OUTPUT
+              fi
             else
               # Fallback to staging URL
               echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
@@ -77,8 +88,15 @@ jobs:
             # For other events, determine by branch
             BRANCH_NAME="${GITHUB_REF#refs/heads/}"
             if [ "$BRANCH_NAME" == "main" ]; then
-              echo "url=${{ secrets.PRODUCTION_BASE_URL }}" >> $GITHUB_OUTPUT
-              echo "source=production-main" >> $GITHUB_OUTPUT
+              # Use production URL with fallback to BASE_URL
+              PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              if [ -n "$PROD_URL" ]; then
+                echo "url=$PROD_URL" >> $GITHUB_OUTPUT
+                echo "source=production-main" >> $GITHUB_OUTPUT
+              else
+                echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+                echo "source=production-fallback-to-staging" >> $GITHUB_OUTPUT
+              fi
             else
               echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
               echo "source=dev-or-feature" >> $GITHUB_OUTPUT
@@ -110,18 +128,32 @@ jobs:
 
       - name: Validate test URL
         run: |
-          if [ -z "${{ steps.test-url.outputs.url }}" ]; then
+          TEST_URL="${{ steps.test-url.outputs.url }}"
+          if [ -z "$TEST_URL" ]; then
             echo "ERROR: BASE_URL is empty!"
             echo "Event: ${{ github.event_name }}"
             echo "URL Source: ${{ steps.test-url.outputs.source }}"
-            if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo ""
+            echo "Troubleshooting:"
+            if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              echo "- Manual workflow_dispatch without deployment_url defaults to BASE_URL secret"
+              echo "- Check if BASE_URL secret is configured in repository settings"
+            elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
               echo "Vercel URL: ${{ github.event.client_payload.url }}"
               echo "Vercel Target: ${{ github.event.client_payload.target }}"
               echo "Vercel Branch: ${{ github.event.client_payload.git.ref }}"
+              if [ "${{ steps.test-url.outputs.source }}" == "production-main" ]; then
+                echo "- PRODUCTION_BASE_URL secret may be missing or empty"
+                echo "- Falling back to BASE_URL secret"
+              fi
             fi
+            echo ""
+            echo "Required secrets:"
+            echo "- BASE_URL (required for all scenarios)"
+            echo "- PRODUCTION_BASE_URL (required for production/main branch)"
             exit 1
           fi
-          echo "✅ BASE_URL is set: ${{ steps.test-url.outputs.url }}"
+          echo "✅ BASE_URL is set: $TEST_URL"
 
       - name: Create test directories
         run: |
