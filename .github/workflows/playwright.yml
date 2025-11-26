@@ -51,22 +51,48 @@ jobs:
       - name: Determine test URL
         id: test-url
         run: |
+          # Function to get variable value (try vars first, then secrets)
+          get_var() {
+            local VAR_NAME="$1"
+            local VAR_VALUE="${{ vars[VAR_NAME] }}"
+            local SECRET_VALUE="${{ secrets[VAR_NAME] }}"
+            if [ -n "$VAR_VALUE" ]; then
+              echo "$VAR_VALUE"
+            elif [ -n "$SECRET_VALUE" ]; then
+              echo "$SECRET_VALUE"
+            else
+              echo ""
+            fi
+          }
+
           # Function to determine URL by branch name
+          # Support both vars (Repository Variables) and secrets (Repository Secrets)
           determine_url_by_branch() {
             local BRANCH_NAME="$1"
             if [ "$BRANCH_NAME" == "main" ]; then
               # main branch → production URL
-              PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              PROD_URL="${{ vars.PRODUCTION_BASE_URL }}"
+              if [ -z "$PROD_URL" ]; then
+                PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              fi
               if [ -n "$PROD_URL" ]; then
                 echo "url=$PROD_URL" >> $GITHUB_OUTPUT
                 echo "source=production-main" >> $GITHUB_OUTPUT
               else
-                echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+                BASE_URL="${{ vars.BASE_URL }}"
+                if [ -z "$BASE_URL" ]; then
+                  BASE_URL="${{ secrets.BASE_URL }}"
+                fi
+                echo "url=$BASE_URL" >> $GITHUB_OUTPUT
                 echo "source=production-fallback-to-dev" >> $GITHUB_OUTPUT
               fi
             else
               # dev branch or any other branch → dev URL
-              echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+              BASE_URL="${{ vars.BASE_URL }}"
+              if [ -z "$BASE_URL" ]; then
+                BASE_URL="${{ secrets.BASE_URL }}"
+              fi
+              echo "url=$BASE_URL" >> $GITHUB_OUTPUT
               if [ "$BRANCH_NAME" == "dev" ]; then
                 echo "source=dev-branch" >> $GITHUB_OUTPUT
               else
@@ -100,17 +126,28 @@ jobs:
             
             if [ "$VERCEL_TARGET" == "production" ] || [ "$VERCEL_BRANCH_NAME" == "main" ]; then
               # Production deployment → production URL
-              PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              PROD_URL="${{ vars.PRODUCTION_BASE_URL }}"
+              if [ -z "$PROD_URL" ]; then
+                PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
+              fi
               if [ -n "$PROD_URL" ]; then
                 echo "url=$PROD_URL" >> $GITHUB_OUTPUT
                 echo "source=production-main" >> $GITHUB_OUTPUT
               else
-                echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+                BASE_URL="${{ vars.BASE_URL }}"
+                if [ -z "$BASE_URL" ]; then
+                  BASE_URL="${{ secrets.BASE_URL }}"
+                fi
+                echo "url=$BASE_URL" >> $GITHUB_OUTPUT
                 echo "source=production-fallback-to-dev" >> $GITHUB_OUTPUT
               fi
             else
               # Non-production deployment → dev URL
-              echo "url=${{ secrets.BASE_URL }}" >> $GITHUB_OUTPUT
+              BASE_URL="${{ vars.BASE_URL }}"
+              if [ -z "$BASE_URL" ]; then
+                BASE_URL="${{ secrets.BASE_URL }}"
+              fi
+              echo "url=$BASE_URL" >> $GITHUB_OUTPUT
               if [ "$VERCEL_BRANCH_NAME" == "dev" ]; then
                 echo "source=dev-branch" >> $GITHUB_OUTPUT
               else
@@ -165,12 +202,14 @@ jobs:
               echo "Branch: $BRANCH_NAME"
               echo ""
               if [ "$BRANCH_NAME" == "main" ]; then
-                echo "- main branch requires PRODUCTION_BASE_URL secret"
+                echo "- main branch requires PRODUCTION_BASE_URL (variable or secret)"
                 echo "- If PRODUCTION_BASE_URL is missing, it falls back to BASE_URL"
               else
-                echo "- $BRANCH_NAME branch requires BASE_URL secret"
+                echo "- $BRANCH_NAME branch requires BASE_URL (variable or secret)"
               fi
-              echo "- Check if the required secret is configured in repository settings"
+              echo "- Check if the required variable/secret is configured in repository settings"
+              echo "- Repository Variables: Settings → Secrets and variables → Actions → Variables"
+              echo "- Repository Secrets: Settings → Secrets and variables → Actions → Secrets"
             elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
               echo "Vercel URL: ${{ github.event.client_payload.url }}"
               echo "Vercel Target: ${{ github.event.client_payload.target }}"
@@ -181,9 +220,11 @@ jobs:
               fi
             fi
             echo ""
-            echo "Required secrets:"
-            echo "- BASE_URL (required for dev branch and all non-production scenarios)"
-            echo "- PRODUCTION_BASE_URL (required for main branch / production)"
+            echo "Required variables/secrets:"
+            echo "- BASE_URL (variable or secret, required for dev branch and all non-production scenarios)"
+            echo "- PRODUCTION_BASE_URL (variable or secret, required for main branch / production)"
+            echo ""
+            echo "Note: Workflow supports both Repository Variables (vars.*) and Secrets (secrets.*)"
             exit 1
           fi
           echo "✅ BASE_URL is set: $TEST_URL"
@@ -198,8 +239,8 @@ jobs:
         env:
           BASE_URL: ${{ steps.test-url.outputs.url }}
           MAILSLURP_API_KEY: ${{ secrets.MAILSLURP_API_KEY }}
-          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
-          MAILSLURP_TEST_USER_INBOX_NAME: ${{ secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
+          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ vars.MAILSLURP_MAIN_USER_INBOX_NAME != '' && vars.MAILSLURP_MAIN_USER_INBOX_NAME || secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
+          MAILSLURP_TEST_USER_INBOX_NAME: ${{ vars.MAILSLURP_TEST_USER_INBOX_NAME != '' && vars.MAILSLURP_TEST_USER_INBOX_NAME || secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
         run: |
           echo "🧪 Running SMOKE tests against: $BASE_URL"
           pnpm exec playwright test tests/smoke --reporter=list,html --workers=2
@@ -209,8 +250,8 @@ jobs:
         env:
           BASE_URL: ${{ steps.test-url.outputs.url }}
           MAILSLURP_API_KEY: ${{ secrets.MAILSLURP_API_KEY }}
-          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ secrets.MAILSLURP_MAIN_USER_INBOX_NAME }}
-          MAILSLURP_TEST_USER_INBOX_NAME: ${{ secrets.MAILSLURP_TEST_USER_INBOX_NAME }}
+          MAILSLURP_MAIN_USER_INBOX_NAME: ${{ vars.MAILSLURP_MAIN_USER_INBOX_NAME || secrets.MAILSLURP_MAIN_USER_INBOX_NAME}}
+          MAILSLURP_TEST_USER_INBOX_NAME: ${{ vars.MAILSLURP_TEST_USER_INBOX_NAME || secrets.MAILSLURP_TEST_USER_INBOX_NAME}}
         run: |
           echo "🧪 Running FULL test suite against: $BASE_URL"
           pnpm exec playwright test --reporter=list,html --workers=2
