@@ -53,6 +53,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
+      - name: Debug cache
+        run: |
+          echo "Listing playwright cache dir:"
+          ls -la ~/.cache/ms-playwright || echo "Directory missing"
+          du -sh ~/.cache/ms-playwright || echo "No size"
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps
 
