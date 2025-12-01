@@ -67,6 +67,13 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps
 
+      - name: "Debug: find ms-playwright directory after install"
+        run: |
+          echo "Searching for Playwright cache after install..."
+           find $HOME -type d -name "ms-playwright*" 2>/dev/null || echo "Cache not found"
+             echo "Cache size:"
+           du -sh $HOME/.cache/ms-playwright || echo "No cache directory"
+
       - name: Determine test URL
         id: test-url
         run: |
