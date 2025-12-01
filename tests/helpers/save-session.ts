@@ -189,7 +189,7 @@ export class AuthHelper extends SigninPage {
         await settingsButton.waitFor({ state: "visible", timeout: 10000 });
 
         const emailText = await page
-          .locator('button[data-sidebar="menu-button"] span.truncate')
+          .locator('button[data-sidebar="menu-button"] div.truncate')
           .textContent({ timeout: 5000 });
 
         if (emailText) {
@@ -241,7 +241,7 @@ export class AuthHelper extends SigninPage {
         await settingsButton.waitFor({ state: "visible", timeout: 10000 });
 
         const emailText = await page
-          .locator('button[data-sidebar="menu-button"] span.truncate')
+          .locator('button[data-sidebar="menu-button"] div.truncate')
           .textContent({ timeout: 5000 });
 
         if (emailText) {
@@ -269,5 +269,11 @@ export class AuthHelper extends SigninPage {
 
   static getCurrentUserInbox() {
     return AuthHelper.currentUserInbox?.emailAddress;
+  }
+
+  static getCurrentUserInboxName() {
+    const email = AuthHelper.currentUserInbox?.emailAddress;
+    if (!email) return undefined;
+    return email.split("@")[0];
   }
 }

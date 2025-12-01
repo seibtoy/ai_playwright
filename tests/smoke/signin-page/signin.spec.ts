@@ -31,9 +31,9 @@ test.describe("UI elements before email submission", () => {
   });
 
   test("The 'Terms of Service' link leads to the correct page", async ({
-    page,
+    context,
   }) => {
-    const newPagePromise = page.waitForEvent("popup");
+    const newPagePromise = context.waitForEvent("page");
 
     await signinPage.termsOfServiceLink.click();
 

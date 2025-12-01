@@ -37,7 +37,7 @@ export class Sidebar {
       name: "Verification code",
     });
 
-    this.logoLink = page.getByRole("link", { name: "AI Thought Partner™" });
+    this.logoLink = page.getByRole("link", { name: "Logo" });
     this.takeAssessmentLink = page.getByRole("link", {
       name: "Take the Assessment",
     });

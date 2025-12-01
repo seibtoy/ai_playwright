@@ -30,16 +30,16 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     });
 
     await test.step("Check if displayed user email is correct", async () => {
-      const currentUserInbox = AuthHelper.getCurrentUserInbox();
+      const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
       await expect(
-        page.getByRole("button", { name: currentUserInbox! })
-      ).toBeVisible();
+        page.getByRole("button").filter({ hasText: currentUserInboxName! })
+      ).toContainText(currentUserInboxName!);
     });
 
     await test.step("Check sidebar menu button", async () => {
       await expect(
         page.locator('button[data-sidebar="menu-button"]', {
-          has: page.locator("span.truncate"),
+          has: page.locator("div.truncate"),
         })
       ).toBeVisible();
     });

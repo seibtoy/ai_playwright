@@ -15,7 +15,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
   });
 
   test("Verify all profile page elements are visible", async ({ page }) => {
-    const currentUserInbox = AuthHelper.getCurrentUserInbox();
+    const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
 
     await test.step("Check if header if visible", async () => {
       await expect(
@@ -27,11 +27,11 @@ test.describe("Verify all profile page elements are visible and work correctly",
       await expect(page.getByText("Profile Information")).toBeVisible();
       await expect(page.getByText("Email")).toBeVisible();
       await expect(
-        page.getByRole("paragraph").filter({ hasText: currentUserInbox! })
-      ).toBeVisible();
+        page.getByRole("paragraph").filter({ hasText: currentUserInboxName! })
+      ).toContainText(currentUserInboxName!);
 
       await expect(
-        page.getByRole("main").getByRole("img", { name: currentUserInbox! })
+        page.getByRole("main").getByRole("img", { name: currentUserInboxName! })
       ).toBeVisible();
     });
 
@@ -60,7 +60,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
       ).toBeVisible();
     });
     await test.step("Check if modal content is visible and correct", async () => {
-      const currentUserInbox = AuthHelper.getCurrentUserInbox();
+      const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
 
       await expect(
         page.getByRole("heading", { name: "Delete Account" })
@@ -82,9 +82,9 @@ test.describe("Verify all profile page elements are visible and work correctly",
       await expect(
         page.getByText("All other personal and usage")
       ).toBeVisible();
-      await expect(
-        page.getByText(`Account: ${currentUserInbox}`)
-      ).toBeVisible();
+      await expect(page.getByText(/Account:/)).toContainText(
+        currentUserInboxName!
+      );
 
       await expect(page.getByText("Type DELETE to confirm:")).toBeVisible();
       await expect(profilePage.deleteInput).toBeVisible();
