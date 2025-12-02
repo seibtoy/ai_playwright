@@ -143,8 +143,8 @@ export class AuthHelper extends SigninPage {
       emailId: targetEmailPreview.id,
     });
 
-    const match = targetEmail.body?.match(
-      /<span[^>]*class=["']bold["'][^>]*>(\d{6})<\/span>/i
+    let match = targetEmail.body?.match(
+      /<span[^>]*class=["'][^"']*bold[^"']*["'][^>]*>(\d{6})<\/span>/i
     );
     const code = match?.[1];
     if (!code) throw new Error("Verification code not found in email");

@@ -168,7 +168,7 @@ test.describe("Check if privacy functionality works correctly", () => {
 
     await test.step("Open the chat url and verify that the chat is private", async () => {
       await page.goto(chatUrl);
-      await expect(chatPage.pageNotFoundText).toBeVisible();
+      await expect(chatPage.chatNotFoundModal).toBeVisible();
     });
   });
 
@@ -263,5 +263,49 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
     } finally {
       await context.close();
     }
+  });
+});
+
+test.describe("Check if chat not found modal works correctly", () => {
+  let chatPage: ChatPage;
+  let authHelper: AuthHelper;
+
+  test.beforeEach(async ({ page }) => {
+    authHelper = new AuthHelper(page);
+    chatPage = new ChatPage(page);
+
+    await authHelper.loginAsMainUser(page);
+  });
+
+  test("Verify that chat not found modal works correctly", async ({ page }) => {
+    await test.step("Open the wrong url and verify that the chat not found modal is visible", async () => {
+      await page.goto(
+        `${process.env.BASE_URL}/chat/4b33087a-c85c-4f94-ac5c-e6ff52d55555`
+      );
+      await expect(chatPage.chatNotFoundModal).toBeVisible();
+    });
+
+    await test.step("Check if text in chat not found modal is correct", async () => {
+      await expect(page.getByText("Chat not found")).toBeVisible();
+      await expect(page.getByText("This conversation may have")).toBeVisible();
+    });
+
+    await test.step("Click on the refresh page button and verify that the page is refreshed", async () => {
+      await Promise.all([
+        page.waitForURL(
+          `${process.env.BASE_URL}/chat/4b33087a-c85c-4f94-ac5c-e6ff52d55555`,
+          {
+            waitUntil: "load",
+          }
+        ),
+        chatPage.refreshPageButtonInModal.click(),
+      ]);
+    });
+
+    await test.step("Click on the start a new chat button and verify that the new chat is created", async () => {
+      await chatPage.startANewChatButtonInModal.click();
+      await expect(page.getByText("Hello there!")).toBeVisible();
+      await expect(page.getByText("What’s top of mind for you")).toBeVisible();
+    });
   });
 });

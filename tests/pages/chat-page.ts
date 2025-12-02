@@ -29,6 +29,10 @@ export class ChatPage extends Sidebar {
 
   readonly pageNotFoundText: Locator;
 
+  readonly chatNotFoundModal: Locator;
+  readonly startANewChatButtonInModal: Locator;
+  readonly refreshPageButtonInModal: Locator;
+
   constructor(page: Page) {
     super(page);
     this.input = page.getByTestId("multimodal-input");
@@ -61,6 +65,16 @@ export class ChatPage extends Sidebar {
     });
     this.pageNotFoundText = page.getByRole("heading", {
       name: "This page could not be found.",
+    });
+    this.chatNotFoundModal = page
+      .locator("div")
+      .filter({ hasText: "Chat not foundThis" })
+      .nth(3);
+    this.startANewChatButtonInModal = page.getByRole("link", {
+      name: "Start a new chat",
+    });
+    this.refreshPageButtonInModal = page.getByRole("button", {
+      name: "Refresh",
     });
   }
 
