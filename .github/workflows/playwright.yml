@@ -45,21 +45,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: "Debug: find ms-playwright directory"
-        run: |
-          echo "Searching for playwright cache..."
-          find / -type d -name "ms-playwright*" 2>/dev/null || true
-
-      - name: Debug cache
-        run: |
-          echo "Listing playwright cache dir:"
-          ls -la ~/.cache/ms-playwright || echo "Directory missing"
-          du -sh ~/.cache/ms-playwright || echo "No size"
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
-
-      - name: Cache Playwright browsers
+      - name: Restore Playwright browsers cache
+        id: cache-playwright
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -67,12 +54,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      - name: "Debug: find ms-playwright directory after install"
+      - name: "Debug: check cache before install"
         run: |
-          echo "Searching for Playwright cache after install..."
-           find $HOME -type d -name "ms-playwright*" 2>/dev/null || echo "Cache not found"
-             echo "Cache size:"
-           du -sh $HOME/.cache/ms-playwright || echo "No cache directory"
+          echo "Checking Playwright cache before install..."
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Cache restored! Size:"
+            du -sh ~/.cache/ms-playwright
+            ls -la ~/.cache/ms-playwright | head -10
+          else
+            echo "❌ Cache not found, will install browsers"
+          fi
+
+      - name: Install Playwright browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps
+
+      - name: Save Playwright browsers cache
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: Determine test URL
         id: test-url
