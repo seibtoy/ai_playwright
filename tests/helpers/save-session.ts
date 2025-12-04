@@ -156,9 +156,9 @@ export class AuthHelper extends SigninPage {
 
     await page.waitForURL(`${process.env.BASE_URL!}/`);
 
-    await this.mailslurp.inboxController.deleteAllInboxEmails({
-      inboxId: inbox.id,
-    });
+    // await this.mailslurp.inboxController.deleteAllInboxEmails({
+    //   inboxId: inbox.id,
+    // });
 
     return { ...inbox, emailAddress: taggedEmail };
   }
