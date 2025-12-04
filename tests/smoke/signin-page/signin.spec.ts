@@ -121,9 +121,10 @@ test.describe("Email verification code API requests", () => {
   test("Sends a request to /signin when submitting a valid email", async ({
     page,
   }) => {
+    const responsePromise = page.waitForResponse(
+      `${process.env.BASE_URL}/signin`
+    );
     await signinPage.emailInput.fill(generateEmail());
-    const responsePromise = page.waitForResponse("**/signin");
-
     await signinPage.sendCodeButton.click();
 
     const response = await responsePromise;
