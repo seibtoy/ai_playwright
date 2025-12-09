@@ -42,7 +42,7 @@ export class ChatPage extends Sidebar {
       name: "Start recording",
     });
     this.recordingButtonWebkit = page.getByRole("button", {
-      name: "Audio recording requires",
+      name: "Start recording",
     });
 
     this.privateButton = page.getByRole("button", { name: "Private" });
