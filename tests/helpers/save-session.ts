@@ -143,7 +143,7 @@ export class AuthHelper extends SigninPage {
       emailId: targetEmailPreview.id,
     });
 
-    let match = targetEmail.body?.match(
+    const match = targetEmail.body?.match(
       /<span[^>]*class=["'][^"']*bold[^"']*["'][^>]*>(\d{6})<\/span>/i
     );
     const code = match?.[1];

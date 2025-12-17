@@ -4,6 +4,7 @@ import { URLS } from "@/tests/config/urls";
 setup("save admin auth state", async ({ page }) => {
   await page.goto(`${process.env.BASE_URL!}/signin`);
 
+  // eslint-disable-next-line playwright/no-page-pause
   await page.pause();
 
   await page.context().storageState({ path: URLS.STORAGE_STATE_ADMIN });

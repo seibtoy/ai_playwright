@@ -1,21 +1,19 @@
 import { test, expect } from "@playwright/test";
 import { ProfilePage } from "@/tests/pages/profile-page";
-import { AuthHelper } from "@/tests/helpers/save-session";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("Verify all profile page elements are visible and work correctly", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let profilePage: ProfilePage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
     profilePage = new ProfilePage(page);
-    authHelper = new AuthHelper(page);
-
-    await authHelper.loginAsMainUser(page);
     await page.goto(`${process.env.BASE_URL}/profile`);
   });
 
   test("Verify all profile page elements are visible", async ({ page }) => {
-    const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
+    const currentUserInboxName = process.env.MAIN_USER_EMAIL;
 
     await test.step("Check if header if visible", async () => {
       await expect(
@@ -60,7 +58,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
       ).toBeVisible();
     });
     await test.step("Check if modal content is visible and correct", async () => {
-      const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
+      const currentUserInboxName = process.env.MAIN_USER_EMAIL;
 
       await expect(
         page.getByRole("heading", { name: "Delete Account" })

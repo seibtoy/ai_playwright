@@ -1,33 +1,29 @@
 import { test, expect } from "@playwright/test";
-import { AuthHelper } from "@/tests/helpers/save-session";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { SigninPage } from "@/tests/pages/signin-page";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("User interacts with chat UI", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let chatPage: ChatPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verifies visibility and behavior of main chat UI elements", async ({
-    page,
-  }) => {
+  test("Verifies visibility and behavior of main chat UI elements when the chat is started", async () => {
+    await test.step("Send message to the chat for display the UI", async () => {
+      await chatPage.sendMessageViaAPI("Hello");
+    });
+
     await test.step("Checks that the 'New Chat' button is visible", async () => {
       await expect(chatPage.newChatButton).toBeVisible();
     });
 
     await test.step("Checks that the 'Private' button is visible", async () => {
       await expect(chatPage.privateButton).toBeVisible();
-    });
-
-    await test.step("Checks the welcome message in an empty chat", async () => {
-      await expect(page.getByText("Hello there!")).toBeVisible();
-      await expect(page.getByText("What’s top of mind for you")).toBeVisible();
     });
 
     await test.step("Checks that the 'Feedback' button is visible", async () => {
@@ -42,16 +38,16 @@ test.describe("User interacts with chat UI", () => {
 });
 
 test.describe("Check file attachment", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let chatPage: ChatPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Attach file via button", async ({ page }, testInfo) => {
+  test("Attach file via button", async ({ page }) => {
     await expect(chatPage.attachmentsButton).toBeVisible();
 
     const [fileChooser] = await Promise.all([
@@ -63,43 +59,30 @@ test.describe("Check file attachment", () => {
     await expect(chatPage.inputAttachmentPreview).toBeVisible();
 
     await page.getByTestId("send-button").click();
-    if (testInfo.project.name === "webkit") {
-      await chatPage.recordingButtonWebkit.waitFor({ state: "visible" });
-      await expect(chatPage.recordingButtonWebkit).toBeVisible();
-    } else {
-      await chatPage.recordingButton.waitFor({ state: "visible" });
-      await expect(chatPage.messageContent).toBeVisible();
-    }
+    await chatPage.recordingButton.waitFor({ state: "visible" });
+    await expect(chatPage.messageContent).toBeVisible();
   });
 });
 
 test.describe("Check if action buttons in chat works correctly", () => {
-  let chatPage: ChatPage;
-  let authHelper: AuthHelper;
-
-  test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
-    chatPage = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
-  });
-
   test("Verify that action buttons visible and works correctly", async ({
     browser,
   }, testInfo) => {
-    const contextOptions: any = {};
-    if (testInfo.project.name === "chromium") {
-      contextOptions.permissions = ["clipboard-read", "clipboard-write"];
-    }
-    const context = await browser.newContext(contextOptions);
+    const context = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_MAIN_USER,
+      permissions:
+        testInfo.project.name === "chromium"
+          ? ["clipboard-read", "clipboard-write"]
+          : [],
+    });
 
     const page = await context.newPage();
+    await page.goto(`${process.env.BASE_URL}/`);
 
     const chatPage = new ChatPage(page);
-    await authHelper.loginAsMainUser(page);
 
     await test.step("Send message and verify that action buttons visible", async () => {
-      await chatPage.sendMessage("Hello world", true, testInfo);
+      await chatPage.sendMessage("Hello world");
 
       await expect(chatPage.copyButton.first()).toBeVisible();
       await expect(chatPage.upvoteButton).toBeVisible();
@@ -122,12 +105,15 @@ test.describe("Check if action buttons in chat works correctly", () => {
 
       await chatPage.copyButton.click();
 
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (testInfo.project.name === "chromium") {
         const clipboardText = await page.evaluate(() =>
           navigator.clipboard.readText()
         );
+        // eslint-disable-next-line playwright/no-conditional-expect
         expect(clipboardText.trim()).toBe(expectedContent!.trim());
       } else {
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(chatPage.copyButton.first()).toBeVisible();
       }
     });
@@ -136,75 +122,80 @@ test.describe("Check if action buttons in chat works correctly", () => {
 });
 
 test.describe("Check if privacy functionality works correctly", () => {
-  let chatPage: ChatPage;
-  let authHelper: AuthHelper;
-
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
-    chatPage = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verify that other users can't see private chat", async ({ page }) => {
-    let chatUrl: string;
-
-    await test.step("Check that the private button is visible", async () => {
-      await expect(chatPage.privateButton).toBeVisible();
+  test("Verify that other users can't see private chat", async ({
+    browser,
+  }) => {
+    // --- CONTEXT FOR MAIN USER ---
+    const mainContext = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_MAIN_USER,
     });
+    const mainPage = await mainContext.newPage();
+    const mainChatPage = new ChatPage(mainPage);
 
-    await test.step("Send message to create the new chat and get the chat url", async () => {
-      await chatPage.sendMessageViaAPI("Hello world");
-      chatUrl = page.url();
-    });
+    // --- CREATE CHAT ---
+    await mainPage.goto(`${process.env.BASE_URL}/`);
+    await mainChatPage.sendMessageViaAPI("Hello world");
+    await expect(mainChatPage.privateButton).toBeVisible();
+    const chatUrl = mainPage.url();
 
-    await test.step("Logout from main account", async () => {
-      await chatPage.logout();
-    });
+    await mainContext.close();
 
-    await test.step("Login as test user", async () => {
-      await authHelper.loginAsTestUser(page);
+    // --- CONTEXT FOR TEST USER ---
+    const testContext = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_TEST_USER,
     });
+    const testPage = await testContext.newPage();
+    const testChatPage = new ChatPage(testPage);
 
-    await test.step("Open the chat url and verify that the chat is private", async () => {
-      await page.goto(chatUrl);
-      await expect(chatPage.chatNotFoundModal).toBeVisible();
-    });
+    await testPage.goto(chatUrl);
+    await expect(testChatPage.chatNotFoundModal).toBeVisible();
+
+    await testContext.close();
   });
 
-  test("Verify that other users can see public chat", async ({ page }) => {
-    let chatUrl: string;
-
-    await test.step("Check that the private button is visible", async () => {
-      await expect(chatPage.privateButton).toBeVisible();
+  test("Verify that other users can see public chat", async ({ browser }) => {
+    // --- CONTEXT FOR MAIN USER ---
+    const mainContext = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_MAIN_USER,
     });
+    const mainPage = await mainContext.newPage();
+    const mainChatPage = new ChatPage(mainPage);
 
-    await test.step("Send message to create the new chat and get the chat url", async () => {
-      await chatPage.sendMessageViaAPI("Hello world");
-      chatUrl = page.url();
-    });
+    await mainPage.goto(`${process.env.BASE_URL}/`);
 
-    await test.step("Change chat privace from private to public", async () => {
-      await chatPage.privateButton.click();
-      await page
-        .getByRole("menuitem", { name: "Public Anyone with the link" })
-        .click();
-      await expect(chatPage.publicButton).toBeVisible();
-      await page.waitForTimeout(300);
-    });
+    // --- CREATE CHAT ---
+    await mainChatPage.sendMessageViaAPI("Hello world");
+    const chatUrl = mainPage.url();
+    await expect(mainChatPage.privateButton).toBeVisible();
 
-    await test.step("Logout from main account", async () => {
-      await chatPage.logout();
-    });
+    // --- CHANGE PRIVACY TO PUBLIC ---
+    await mainChatPage.privateButton.click();
+    await mainPage
+      .getByRole("menuitem", { name: "Public Anyone with the link" })
+      .click();
+    await expect(mainChatPage.publicButton).toBeVisible();
+    await expect(mainChatPage.publicButton).toBeEnabled();
 
-    await test.step("Login as test user", async () => {
-      await authHelper.loginAsTestUser(page);
-    });
+    // --- LOGOUT MAIN USER ---
+    await mainContext.close();
 
-    await test.step("Open the chat url and verify that the chat is public", async () => {
-      await page.goto(chatUrl);
-      await expect(chatPage.messageContent.last()).toBeVisible();
+    // --- CONTEXT FOR TEST USER ---
+    const testContext = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_TEST_USER,
     });
+    const testPage = await testContext.newPage();
+    const testChatPage = new ChatPage(testPage);
+
+    await testPage.goto(chatUrl);
+
+    // --- VERIFY THAT THE CHAT IS PUBLIC ---
+    await expect(testChatPage.messageContent.last()).toBeVisible();
+
+    await testContext.close();
   });
 });
 
@@ -230,9 +221,12 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
       });
 
       await test.step("Create 5 chats", async () => {
-        for (let i = 0; i < 5; i++) {
+        let response = await chatPage.sendMessageViaAPI("Testing message");
+        expect(response.status()).toBe(200);
+
+        for (let i = 1; i < 5; i++) {
           await chatPage.createNewChat();
-          const response = await chatPage.sendMessageViaAPI("Testing message");
+          response = await chatPage.sendMessageViaAPI("Testing message");
           expect(response.status()).toBe(200);
         }
       });
@@ -267,14 +261,13 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
 });
 
 test.describe("Check if chat not found modal works correctly", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let chatPage: ChatPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     chatPage = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
   test("Verify that chat not found modal works correctly", async ({ page }) => {

@@ -44,8 +44,7 @@ export class StratsyncDashboardPage {
     }
     await this.companyDashboardTab.click();
     await this.page.waitForURL(
-      `${process.env.BASE_URL}/dashboard/stratsync?tab=company` ||
-        `${process.env.BASE_URL}/dashboard/stratsync`
+      `${process.env.BASE_URL}/dashboard/stratsync?tab=company`
     );
   }
   async gotoMyStratSync() {

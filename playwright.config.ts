@@ -1,11 +1,11 @@
 const dotenv = require("dotenv");
 const path = require("path");
-const fs = require("fs");
 
 const envPath = path.resolve(__dirname, ".env");
 dotenv.config({ path: envPath, override: true });
 
 const { defineConfig, devices } = require("@playwright/test");
+import { URLS } from "./tests/config/urls";
 
 module.exports = defineConfig({
   testDir: "./tests",

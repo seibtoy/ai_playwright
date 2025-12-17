@@ -1,21 +1,20 @@
 import { test } from "@playwright/test";
-import { AuthHelper } from "@/tests/helpers/save-session";
+import { Auth } from "@/tests/helpers/auth";
 import { ChatPage } from "@/tests/pages/chat-page";
 
 test.describe("Chat optimization", () => {
   let chatPage: ChatPage;
-  let authHelper: AuthHelper;
+  let authHelper: Auth;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
+    authHelper = new Auth(page);
     chatPage = new ChatPage(page);
 
     await authHelper.loginAsMainUser(page);
   });
 
-  test("Long message prompt 300 times with avg block timing", async ({
-    page,
-  }) => {
+  // eslint-disable-next-line playwright/expect-expect
+  test("Long message prompt 300 times with avg block timing", async () => {
     test.setTimeout(0);
 
     const longMessagePrompt =
@@ -56,17 +55,16 @@ test.describe("Chat optimization", () => {
       for (let i = 1; i <= totalIterations; i++) {
         await sendMessage(i);
 
+        // eslint-disable-next-line playwright/no-conditional-in-test
         if (i % step === 0) {
           const avg = batch.reduce((a, b) => a + b, 0) / batch.length;
           responseTimes.push({ iteration: i, avgResponseTimeMs: avg });
 
-          await test.step(`Logging avg time for batch ending at ${i}`, async () => {
-            console.log(
-              `[${i}/${totalIterations}] Avg iteration time = ${avg.toFixed(
-                2
-              )} ms`
-            );
-          });
+          console.log(
+            `[${i}/${totalIterations}] Avg iteration time = ${avg.toFixed(
+              2
+            )} ms`
+          );
 
           batch = [];
         }
@@ -79,9 +77,8 @@ test.describe("Chat optimization", () => {
     });
   });
 
-  test("Send 15 different prompts 10 times each, check response time, thinking time and typing time and check for jailbreak trigger", async ({
-    page,
-  }) => {
+  // eslint-disable-next-line playwright/expect-expect
+  test("Send 15 different prompts 10 times each, check response time, thinking time and typing time and check for jailbreak trigger", async () => {
     test.setTimeout(0);
 
     const prompts = [
@@ -111,13 +108,13 @@ test.describe("Chat optimization", () => {
 
     for (let p = 0; p < prompts.length; p++) {
       const prompt = prompts[p];
-      let batchResponse: number[] = [];
-      let batchThinking: number[] = [];
+      const batchResponse: number[] = [];
+      const batchThinking: number[] = [];
 
       for (let i = 1; i <= runsPerPrompt; i++) {
         try {
           await chatPage.input.waitFor({ state: "visible", timeout: 20000 });
-        } catch (e) {
+        } catch {
           throw new Error(
             `Input field not found for prompt ${p}, iteration ${i}. Page may have crashed (e.g. 404).`
           );
@@ -153,6 +150,8 @@ test.describe("Chat optimization", () => {
         const lastMessage = chatPage.messageContent.last();
         const messageText = await lastMessage.textContent();
         const hasText = messageText?.includes(jailbreakTrigger);
+
+        // eslint-disable-next-line playwright/no-conditional-in-test
         if (hasText) {
           console.log(
             `Jailbreak triggered for prompt ${p + 1} on iteration ${i}`

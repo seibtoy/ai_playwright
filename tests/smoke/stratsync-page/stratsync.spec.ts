@@ -1,16 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { StratsyncDashboardPage } from "@/tests/pages/stratsync-dashboard-page";
-import { AuthHelper } from "@/tests/helpers/save-session";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("Verifies visibility and behavior of StratSync dashboard elements", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let stratsyncDashboardPage: StratsyncDashboardPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     stratsyncDashboardPage = new StratsyncDashboardPage(page);
 
-    await authHelper.loginAsMainUser(page);
     await stratsyncDashboardPage.gotoStratSyncDashboardPage();
   });
 
@@ -29,37 +28,46 @@ test.describe("Verifies visibility and behavior of StratSync dashboard elements"
     });
 
     await test.step("Checks if current tab is not clickable and clickable after changing tab", async () => {
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if ((await stratsyncDashboardPage.getCurrentPageTab()) === "company") {
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(
           stratsyncDashboardPage.companyDashboardTab
         ).toHaveAttribute("aria-selected", "true");
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(stratsyncDashboardPage.myStratSyncTab).toHaveAttribute(
           "aria-selected",
           "false"
         );
 
         await stratsyncDashboardPage.myStratSyncTab.click();
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(
           stratsyncDashboardPage.companyDashboardTab
         ).toHaveAttribute("aria-selected", "false");
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(stratsyncDashboardPage.myStratSyncTab).toHaveAttribute(
           "aria-selected",
           "true"
         );
       } else {
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(stratsyncDashboardPage.myStratSyncTab).toHaveAttribute(
           "aria-selected",
           "true"
         );
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(
           stratsyncDashboardPage.companyDashboardTab
         ).toHaveAttribute("aria-selected", "false");
 
         await stratsyncDashboardPage.companyDashboardTab.click();
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(stratsyncDashboardPage.myStratSyncTab).toHaveAttribute(
           "aria-selected",
           "false"
         );
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(
           stratsyncDashboardPage.companyDashboardTab
         ).toHaveAttribute("aria-selected", "true");

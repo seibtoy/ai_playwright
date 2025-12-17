@@ -1,10 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { generateEmail } from "@/tests/helpers/generate-email";
-import { AuthHelper } from "@/tests/helpers/save-session";
+import { Auth } from "@/tests/helpers/auth";
 import { SigninPage } from "@/tests/pages/signin-page";
 import { ChatPage } from "@/tests/pages/chat-page";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("UI elements before email submission", () => {
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
@@ -31,24 +34,27 @@ test.describe("UI elements before email submission", () => {
   });
 
   test("The 'Terms of Service' link leads to the correct page", async ({
-    context,
-  }) => {
-    const newPagePromise = context.waitForEvent("page");
-
-    await signinPage.termsOfServiceLink.click();
-
-    const newPage = await newPagePromise;
-
-    await expect(newPage).toHaveURL(
-      `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
-    );
-
-    await newPage.close();
-  });
-
-  test("The 'Send verification code' button should be inactive until the email is valid.", async ({
     page,
   }) => {
+    await test.step("Terms of Service link redirects to proper link", async () => {
+      const termsOfServicePagePromise = page.waitForEvent("popup");
+      await signinPage.termsOfServiceLink.click();
+      const termsOfServicePage = await termsOfServicePagePromise;
+
+      const currentUrl = new URL(termsOfServicePage.url());
+      const expectedUrl = new URL(
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+      );
+
+      expect(`${currentUrl.origin}${currentUrl.pathname}`).toBe(
+        `${expectedUrl.origin}${expectedUrl.pathname}`
+      );
+
+      await termsOfServicePage.close();
+    });
+  });
+
+  test("The 'Send verification code' button should be inactive until the email is valid.", async () => {
     await expect(signinPage.sendCodeButton).toBeDisabled();
 
     await signinPage.emailInput.fill("invalid-email-format");
@@ -69,6 +75,8 @@ test.describe("UI elements before email submission", () => {
 });
 
 test.describe("UI elements after email submission", () => {
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
@@ -100,9 +108,7 @@ test.describe("UI elements after email submission", () => {
     await expect(signinPage.useDifferentEmailButton).toBeVisible();
   });
 
-  test('Returns to email input when clicking "Use a different email"', async ({
-    page,
-  }) => {
+  test('Returns to email input when clicking "Use a different email"', async () => {
     await signinPage.emailInput.fill(generateEmail());
     await signinPage.sendCodeButton.click();
     await signinPage.useDifferentEmailButton.click();
@@ -111,6 +117,8 @@ test.describe("UI elements after email submission", () => {
 });
 
 test.describe("Email verification code API requests", () => {
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
@@ -154,25 +162,22 @@ test.describe("Email verification code API requests", () => {
 });
 
 test.describe("Smoke check log out", () => {
-  let signinPage: SigninPage;
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let sidebar: ChatPage;
 
   test.beforeEach(async ({ page }) => {
-    signinPage = new SigninPage(page);
     sidebar = new ChatPage(page);
   });
 
   test("Check if user is logged in after closing the app", async ({
     browser,
   }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_MAIN_USER,
+    });
     try {
       const page = await context.newPage();
-      const authHelper = new AuthHelper(page);
-
-      await test.step("Login", async () => {
-        await authHelper.loginAsMainUser(page);
-      });
 
       await test.step("Close the app", async () => {
         await page.close();
@@ -191,14 +196,11 @@ test.describe("Smoke check log out", () => {
   test("Check if user is logged out after closing the app after logout", async ({
     browser,
   }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      storageState: URLS.STORAGE_STATE_MAIN_USER,
+    });
     try {
       let page = await context.newPage();
-      const authHelper = new AuthHelper(page);
-
-      await test.step("Login", async () => {
-        await authHelper.loginAsMainUser(page);
-      });
 
       await test.step("Close the app", async () => {
         await page.close();
@@ -236,6 +238,8 @@ test.describe("Smoke check log out", () => {
 });
 
 test.describe("Continue as guest", () => {
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {

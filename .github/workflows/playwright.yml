@@ -84,99 +84,22 @@ jobs:
       - name: Determine test URL
         id: test-url
         run: |
-          # Function to determine URL by branch name
-          # Support both vars (Repository Variables) and secrets (Repository Secrets)
-          determine_url_by_branch() {
-            local BRANCH_NAME="$1"
-            if [ "$BRANCH_NAME" == "main" ]; then
-              # main branch → production URL
-              PROD_URL="${{ vars.PRODUCTION_BASE_URL }}"
-              if [ -z "$PROD_URL" ]; then
-                PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
-              fi
-              if [ -n "$PROD_URL" ]; then
-                echo "url=$PROD_URL" >> $GITHUB_OUTPUT
-                echo "source=production-main" >> $GITHUB_OUTPUT
-              else
-                BASE_URL="${{ vars.BASE_URL }}"
-                if [ -z "$BASE_URL" ]; then
-                  BASE_URL="${{ secrets.BASE_URL }}"
-                fi
-                echo "url=$BASE_URL" >> $GITHUB_OUTPUT
-                echo "source=production-fallback-to-dev" >> $GITHUB_OUTPUT
-              fi
-            else
-              # dev branch or any other branch → dev URL
-              BASE_URL="${{ vars.BASE_URL }}"
-              if [ -z "$BASE_URL" ]; then
-                BASE_URL="${{ secrets.BASE_URL }}"
-              fi
-              echo "url=$BASE_URL" >> $GITHUB_OUTPUT
-              if [ "$BRANCH_NAME" == "dev" ]; then
-                echo "source=dev-branch" >> $GITHUB_OUTPUT
-              else
-                echo "source=feature-or-other-branch" >> $GITHUB_OUTPUT
-              fi
-            fi
-          }
-
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.deployment_url }}" ]; then
             # Manual input takes priority
             echo "url=${{ github.event.inputs.deployment_url }}" >> $GITHUB_OUTPUT
             echo "source=manual-input" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            # workflow_dispatch without URL: determine by current branch
-            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            echo "🔍 Detected branch from GITHUB_REF: $BRANCH_NAME"
-            echo "🔍 Full GITHUB_REF: $GITHUB_REF"
-            determine_url_by_branch "$BRANCH_NAME"
-          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
-            # Handle Vercel deployment events
-            VERCEL_URL="${{ github.event.client_payload.url }}"
-            VERCEL_TARGET="${{ github.event.client_payload.target }}"
-            VERCEL_BRANCH="${{ github.event.client_payload.git.ref }}"
-            
-            # Extract branch name from ref (e.g., "refs/heads/main" -> "main")
-            if [ -n "$VERCEL_BRANCH" ]; then
-              VERCEL_BRANCH_NAME="${VERCEL_BRANCH#refs/heads/}"
-            else
-              VERCEL_BRANCH_NAME=""
-            fi
-            
-            if [ "$VERCEL_TARGET" == "production" ] || [ "$VERCEL_BRANCH_NAME" == "main" ]; then
-              # Production deployment → production URL
-              PROD_URL="${{ vars.PRODUCTION_BASE_URL }}"
-              if [ -z "$PROD_URL" ]; then
-                PROD_URL="${{ secrets.PRODUCTION_BASE_URL }}"
-              fi
-              if [ -n "$PROD_URL" ]; then
-                echo "url=$PROD_URL" >> $GITHUB_OUTPUT
-                echo "source=production-main" >> $GITHUB_OUTPUT
-              else
-                BASE_URL="${{ vars.BASE_URL }}"
-                if [ -z "$BASE_URL" ]; then
-                  BASE_URL="${{ secrets.BASE_URL }}"
-                fi
-                echo "url=$BASE_URL" >> $GITHUB_OUTPUT
-                echo "source=production-fallback-to-dev" >> $GITHUB_OUTPUT
-              fi
-            else
-              # Non-production deployment → dev URL
-              BASE_URL="${{ vars.BASE_URL }}"
-              if [ -z "$BASE_URL" ]; then
-                BASE_URL="${{ secrets.BASE_URL }}"
-              fi
-              echo "url=$BASE_URL" >> $GITHUB_OUTPUT
-              if [ "$VERCEL_BRANCH_NAME" == "dev" ]; then
-                echo "source=dev-branch" >> $GITHUB_OUTPUT
-              else
-                echo "source=dev-or-feature" >> $GITHUB_OUTPUT
-              fi
-            fi
           else
-            # For other events, determine by branch
-            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            determine_url_by_branch "$BRANCH_NAME"
+            # Always use BASE_URL (from vars or secrets)
+            BASE_URL="${{ vars.BASE_URL }}"
+            if [ -z "$BASE_URL" ]; then
+              BASE_URL="${{ secrets.BASE_URL }}"
+            fi
+            if [ -z "$BASE_URL" ]; then
+              echo "ERROR: BASE_URL is not set in repository variables or secrets"
+              exit 1
+            fi
+            echo "url=$BASE_URL" >> $GITHUB_OUTPUT
+            echo "source=base-url" >> $GITHUB_OUTPUT
           fi
 
       - name: Show test configuration
@@ -190,63 +113,36 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             BRANCH_NAME="${GITHUB_REF#refs/heads/}"
             echo "Branch: $BRANCH_NAME"
-            echo "GITHUB_REF: $GITHUB_REF"
-            echo "github.ref: ${{ github.ref }}"
           fi
-          echo ""
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo ""
             echo "📦 Vercel Deployment Info:"
             echo "Target: ${{ github.event.client_payload.target }}"
             echo "Branch: ${{ github.event.client_payload.git.ref }}"
             echo "Preview URL: ${{ github.event.client_payload.url }}"
-            echo ""
-            if [ "${{ steps.test-url.outputs.source }}" == "production-main" ]; then
-              echo "🏭 Testing PRODUCTION DEPLOYMENT"
-            else
-              echo "🧪 Testing DEV/STAGING DEPLOYMENT"
-            fi
           fi
 
       - name: Validate test URL
         run: |
           TEST_URL="${{ steps.test-url.outputs.url }}"
           if [ -z "$TEST_URL" ]; then
-            echo "ERROR: BASE_URL is empty!"
+            echo "ERROR: Test URL is empty!"
             echo "Event: ${{ github.event_name }}"
             echo "URL Source: ${{ steps.test-url.outputs.source }}"
             echo ""
             echo "Troubleshooting:"
             if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-              BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-              echo "Branch: $BRANCH_NAME"
-              echo ""
-              if [ "$BRANCH_NAME" == "main" ]; then
-                echo "- main branch requires PRODUCTION_BASE_URL (variable or secret)"
-                echo "- If PRODUCTION_BASE_URL is missing, it falls back to BASE_URL"
-              else
-                echo "- $BRANCH_NAME branch requires BASE_URL (variable or secret)"
-              fi
-              echo "- Check if the required variable/secret is configured in repository settings"
+              echo "- For manual runs: provide deployment_url input or ensure BASE_URL is set"
+            else
+              echo "- BASE_URL must be configured in repository settings"
               echo "- Repository Variables: Settings → Secrets and variables → Actions → Variables"
               echo "- Repository Secrets: Settings → Secrets and variables → Actions → Secrets"
-            elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
-              echo "Vercel URL: ${{ github.event.client_payload.url }}"
-              echo "Vercel Target: ${{ github.event.client_payload.target }}"
-              echo "Vercel Branch: ${{ github.event.client_payload.git.ref }}"
-              if [ "${{ steps.test-url.outputs.source }}" == "production-main" ]; then
-                echo "- PRODUCTION_BASE_URL secret may be missing or empty"
-                echo "- Falling back to BASE_URL secret"
-              fi
             fi
             echo ""
-            echo "Required variables/secrets:"
-            echo "- BASE_URL (variable or secret, required for dev branch and all non-production scenarios)"
-            echo "- PRODUCTION_BASE_URL (variable or secret, required for main branch / production)"
-            echo ""
-            echo "Note: Workflow supports both Repository Variables (vars.*) and Secrets (secrets.*)"
+            echo "Required: BASE_URL (variable or secret)"
             exit 1
           fi
-          echo "✅ BASE_URL is set: $TEST_URL"
+          echo "✅ Test URL is set: $TEST_URL"
 
       - name: Create test directories
         run: |

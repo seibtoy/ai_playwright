@@ -22,7 +22,7 @@ test.describe("Analyze final response time", () => {
     chatPage = new ChatPage(page);
   });
 
-  test("Analyze final response time", async ({ browser }, testInfo) => {
+  test("Analyze final response time", async ({ browser }) => {
     test.setTimeout(0);
 
     const context = await browser.newContext({
@@ -36,7 +36,7 @@ test.describe("Analyze final response time", () => {
       await test.step("Login as admin and verify", async () => {
         chatPage = new ChatPage(page);
         await page.goto(`${process.env.BASE_URL}/`, {
-          waitUntil: "networkidle",
+          waitUntil: "load",
         });
         await chatPage.openSettings();
         await expect(chatPage.adminMenuItem).toBeVisible();
@@ -59,7 +59,7 @@ test.describe("Analyze final response time", () => {
 
       await test.step("Go to the main page", async () => {
         await page.goto(`${process.env.BASE_URL}/`, {
-          waitUntil: "networkidle",
+          waitUntil: "load",
         });
         await expect(chatPage.input).toBeVisible({ timeout: 10000 });
       });
@@ -86,7 +86,7 @@ test.describe("Analyze final response time", () => {
                 k + 1
               }/${iterations} is processing`
             );
-            await chatPage.sendMessage(prompts[i], false, testInfo);
+            await chatPage.sendMessage(prompts[i]);
             await expect(
               chatPage.saveAsFinalResponseButton.last()
             ).toBeVisible();
@@ -105,8 +105,11 @@ test.describe("Analyze final response time", () => {
       });
 
       await test.step("Select all responses and click on the 'Analyze' button", async () => {
-        await page.waitForTimeout(500);
-        await page.getByRole("button", { name: "Select All" }).click();
+        const selectAllButton = page.getByRole("button", {
+          name: "Select All",
+        });
+        await expect(selectAllButton).toBeVisible();
+        await selectAllButton.click();
         await page.getByRole("button", { name: /Analyze with AI/ }).click();
         await page.waitForURL(/\/\?server_prompt=true&chat_id=.*/);
       });

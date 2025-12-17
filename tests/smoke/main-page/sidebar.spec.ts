@@ -1,19 +1,17 @@
 import { test, expect } from "@playwright/test";
-import { AuthHelper } from "@/tests/helpers/save-session";
 import { ChatPage } from "@/tests/pages/chat-page";
-import { URLS } from "@/tests/config/urls";
 import { SigninPage } from "@/tests/pages/signin-page";
 import { generateEmail } from "@/tests/helpers/generate-email";
+import { URLS } from "@/tests/config/urls";
 
 test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
+
   let sidebar: ChatPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     sidebar = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
   test("Verifies sidebar UI elements", async ({ page }) => {
@@ -30,7 +28,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     });
 
     await test.step("Check if displayed user email is correct", async () => {
-      const currentUserInboxName = AuthHelper.getCurrentUserInboxName();
+      const currentUserInboxName = process.env.MAIN_USER_EMAIL;
       await expect(
         page.getByRole("button").filter({ hasText: currentUserInboxName! })
       ).toContainText(currentUserInboxName!);
@@ -53,17 +51,25 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
           .getAttribute("data-state");
       });
 
+    await test.step("Send message to the chat for display the menu", async () => {
+      await sidebar.sendMessageViaAPI("Hello");
+    });
+
     await test.step("Find toggle button", async () => {
       await expect(sidebar.toggleButton).toBeVisible();
     });
 
     await test.step("Toggle sidebar and validate state", async () => {
       await sidebar.toggleButton.click();
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (sidebarState === "open") {
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(sidebar.sidebar).toHaveAttribute("data-state", "closed");
         await sidebar.toggleButton.click();
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
       } else {
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
       }
     });
@@ -109,8 +115,10 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     );
 
     await test.step("Open the user settings dropdown", async () => {
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (dropdownState === "closed") {
         await sidebar.settingsDropdown.click();
+        // eslint-disable-next-line playwright/no-conditional-expect
         await expect(sidebar.settingsDropdown).toHaveAttribute(
           "data-state",
           "open"
@@ -119,15 +127,18 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     });
 
     await test.step("Toggle theme mode", async () => {
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (theme === "dark") {
         await page.getByRole("menuitem", { name: "Toggle light mode" }).click();
 
         const newTheme = await sidebar.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
         expect(newTheme).toBe("light");
       } else {
         await page.getByRole("menuitem", { name: "Toggle dark mode" }).click();
 
         const newTheme = await sidebar.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
         expect(newTheme).toBe("dark");
       }
     });
@@ -163,21 +174,15 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 });
 
 test.describe("Verifies all sidebar components and their behavior when chats started", () => {
+  test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
   let sidebar: ChatPage;
-  let authHelper: AuthHelper;
-  let chatPage: ChatPage;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
-    chatPage = new ChatPage(page);
     sidebar = new ChatPage(page);
-
-    await authHelper.loginAsMainUser(page);
+    await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verifies the chats created in the sidebar", async ({
-    page,
-  }, testInfo) => {
+  test("Verifies the chats created in the sidebar", async ({ page }) => {
     await test.step("Check that the sidebar is visible", async () => {
       await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
     });
@@ -187,7 +192,7 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
     });
 
     await test.step("Write a prompt in the chat input", async () => {
-      await sidebar.sendMessage("Hello", true, testInfo);
+      await sidebar.sendMessage("Hello");
     });
 
     await test.step("Get last chat in the sidebar", async () => {
@@ -209,12 +214,12 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
 });
 
 test.describe("Verifies all sidebar components and their behavior in case when user IS GUEST", () => {
+  test.use({ storageState: undefined }); // This test is not supposed to use a storage state
+
   let sidebar: ChatPage;
   let signinPage: SigninPage;
-  let authHelper: AuthHelper;
 
   test.beforeEach(async ({ page }) => {
-    authHelper = new AuthHelper(page);
     sidebar = new ChatPage(page);
     signinPage = new SigninPage(page);
 
@@ -236,26 +241,31 @@ test.describe("Verifies all sidebar components and their behavior in case when u
     await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
   });
 
-  test("Verifies that theme mode can be toggled", async ({ page }) => {
+  test("Verifies that theme mode can be toggled", async () => {
     const theme = await sidebar.getTheme();
 
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (theme === "dark") {
       await sidebar.toggleThemeButton.click();
 
       const newTheme = await sidebar.getTheme();
+      // eslint-disable-next-line playwright/no-conditional-expect
       expect(newTheme).toBe("light");
 
       await sidebar.toggleThemeButton.click();
       const newNewTheme = await sidebar.getTheme();
+      // eslint-disable-next-line playwright/no-conditional-expect
       expect(newNewTheme).toBe("dark");
     } else {
       await sidebar.toggleThemeButton.click();
 
       const newTheme = await sidebar.getTheme();
+      // eslint-disable-next-line playwright/no-conditional-expect
       expect(newTheme).toBe("dark");
 
       await sidebar.toggleThemeButton.click();
       const newNewTheme = await sidebar.getTheme();
+      // eslint-disable-next-line playwright/no-conditional-expect
       expect(newNewTheme).toBe("light");
     }
   });

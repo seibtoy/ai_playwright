@@ -12,7 +12,7 @@ export class SigninPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.locator('input[name="email"]');
+    this.emailInput = page.getByRole("textbox", { name: "Email Address" });
     this.sendCodeButton = page.getByRole("button", {
       name: "Send verification code",
     });
