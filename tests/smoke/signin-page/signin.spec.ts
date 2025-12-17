@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { generateEmail } from "@/tests/helpers/generate-email";
-import { Auth } from "@/tests/helpers/auth";
 import { SigninPage } from "@/tests/pages/signin-page";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { URLS } from "@/tests/config/urls";
