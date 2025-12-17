@@ -1,353 +1,334 @@
-# Playwright Test Suite
+## Playwright Test Suite
 
-## Directory Structure
+### Directory Structure
 
-```
+```txt
 tests/
-├── config/                 # Test configuration files
-│   ├── env.ts             # Environment variables and configuration
-│   └── global-setup.ts    # Global setup for authentication
-├── data/                  # Test data files
-│   └── test-pdf.pdf       # Sample PDF for file upload tests
-├── helpers/               # Test helper functions and utilities
-│   ├── generate-email.ts  # Email generation utility
-│   ├── index.ts          # Helper exports
-│   ├── save-admin-session.spec.ts  # Admin session setup
-│   └── save-session.ts   # Authentication helper class
-├── pages/                 # Page Object Model classes
-│   ├── chat-page.ts      # Chat interface page object
-│   ├── index.ts          # Page object exports
-│   ├── profile-page.ts   # User profile page object
-│   ├── sidebar-component.ts  # Sidebar component page object
-│   ├── signin-page.ts    # Sign-in page object
-│   └── stratsync-dashboard-page.ts  # Dashboard page object
-├── regression/            # Regression tests
+├── config/                       # Shared test configuration
+│   ├── global-setup.ts          # Pre-login and storageState generation
+│   └── urls.ts                  # Centralized paths to storage files
+├── data/                         # Test data files
+│   └── test-pdf.pdf             # PDF used for upload tests
+├── helpers/                      # Utility helpers and setup scripts
+│   ├── auth.ts                  # Simple auth helper using OTP code from e‑mail
+│   ├── generate-email.ts        # Test email generator
+│   └── save-admin-session.spec.ts # Manual admin session bootstrap
+├── pages/                        # Page Object Model
+│   ├── chat-page.ts             # Main chat page (extends Sidebar)
+│   ├── profile-page.ts          # Profile page
+│   ├── sidebar-component.ts     # Shared sidebar, navigation, user menu
+│   ├── signin-page.ts           # Sign-in page / Continue as guest
+│   └── stratsync-dashboard-page.ts # StratSync dashboard page
+├── regression/                   # Regression / performance scenarios
 │   ├── analyze-final-response-time.spec.ts
 │   └── response-aggregation.spec.ts
-├── smoke/                 # Smoke tests
-│   ├── main-page/        # Main page tests
-│   │   ├── chat-ui.spec.ts
-│   │   └── sidebar.spec.ts
-│   ├── profile-page/     # Profile page tests
-│   │   └── profile.spec.ts
-│   └── signin-page/      # Authentication tests
-│       └── signin.spec.ts
-└── storage/              # Test data storage
-    ├── inboxes.json      # MailSlurp inbox configuration
-    ├── storage-state-admin.json      # Admin user session
-    ├── storage-state-main-user.json  # Main user session
-    └── storage-state-test-user.json  # Test user session
+├── smoke/                        # Smoke tests for core functionality
+│   ├── main-page/
+│   │   ├── chat-ui.spec.ts      # Chat + attachments, message actions
+│   │   └── sidebar.spec.ts      # Navigation, user menu, guest/auth flows
+│   ├── profile-page/
+│   │   └── profile.spec.ts      # Profile, delete-account modal
+│   ├── signin-page/
+│   │   └── signin.spec.ts       # Sign-in screen, Continue as guest, logout
+│   └── stratsync-page/
+│       └── stratsync.spec.ts    # StratSync dashboard navigation
+└── storage/                      # Local storage files for auth
+    ├── main-user.json           # storageState for main user
+    └── test-user.json           # storageState for test user
+    # additional runtime file (not committed):
+    # - storage-state-admin.json  – admin session
 ```
 
-## Getting Started
+### Getting Started
 
-### Prerequisites
+#### 1. Environment Variables
 
-1. **Environment Variables**: Ensure `.env` file contains:
-
-   ```bash
-   BASE_URL=https://your-app-url.com
-   AI_LEADERSHIP_URL=https://connect.aileadership.com
-   MAILSLURP_API_KEY=your_mailslurp_api_key
-   MAILSLURP_MAIN_USER_INBOX_NAME=playwright-main-user
-   MAILSLURP_TEST_USER_INBOX_NAME=playwright-test-user
-   ```
-
-2. **Dependencies**: All required packages are installed with the main project.
-
-### Running Tests
-
-#### Run All Tests
+`playwright.config.ts` reads `.env` from the repository root. At minimum you need:
 
 ```bash
-npx playwright test
+# Application URLs
+BASE_URL=https://your-app-url.com
+AI_LEADERSHIP_URL=https://connect.aileadership.com
+
+# Users for OTP-based login
+MAIN_USER_EMAIL=playwright-main-user@example.com
+TEST_USER_EMAIL=playwright-test-user@example.com
+AUTH_CODE=000000  # one-time code that is delivered to the inbox in staging
 ```
 
-#### Run Specific Test Categories
+In CI these variables are provided via GitHub Actions:
+
+- **`BASE_URL`** and **`AI_LEADERSHIP_URL`** — `Actions → Variables`
+- **`MAIN_USER_EMAIL`**, **`TEST_USER_EMAIL`** — `Actions → Variables`
+- **`AUTH_CODE`** — `Actions → Secrets`
+
+#### 2. Dependencies
+
+All test devDependencies are defined in `package.json` and installed with:
 
 ```bash
-# Smoke tests only
-npx playwright test tests/smoke/
+pnpm install
+```
 
-# Regression tests only
-npx playwright test tests/regression/
+### Running Tests (local)
+
+#### Full test run
+
+```bash
+# via npm script
+pnpm test
+
+# direct call
+pnpm exec playwright test
+```
+
+#### Selected groups / files
+
+```bash
+# Smoke only
+pnpm exec playwright test tests/smoke
+
+# Regression only
+pnpm exec playwright test tests/regression
 
 # Specific test file
-npx playwright test tests/smoke/signin-page/signin.spec.ts
+pnpm exec playwright test tests/smoke/signin-page/signin.spec.ts
 ```
 
-#### Run Tests with Different Options
+#### Useful options
 
 ```bash
-# Run with UI mode (interactive)
-npx playwright test --ui
+# UI mode
+pnpm exec playwright test --ui
 
-# Run in headed mode (see browser)
-npx playwright test --headed
+# Headed mode (visible browser)
+pnpm exec playwright test --headed
 
-# Run specific browser
-npx playwright test --project=chromium
+# Run only in Chromium
+pnpm exec playwright test --project=chromium
 
-# Run with custom workers (parallelism)
-npx playwright test --workers=6
+# Number of workers (parallelism)
+pnpm exec playwright test --workers=6
 
-# Run tests in debug mode
-npx playwright test --debug
+# Debug mode
+pnpm exec playwright test --debug
 ```
 
-#### Generate Test Report
+#### Reports
 
 ```bash
-# Generate HTML report
-npx playwright test --reporter=html
+# HTML report
+pnpm exec playwright test --reporter=html
 
-# Open the report
-npx playwright show-report
+# Open last report
+pnpm exec playwright show-report
 ```
 
-## 🔧 Test Configuration
-
-### Global Setup
-
-Tests use a global setup (`tests/config/global-setup.ts`) that automatically:
-
-- Authenticates main user and test user via MailSlurp email service
-- Saves authentication state for reuse across tests
-- Runs before all test suites
-
-### Authentication System
-
-The test suite uses **MailSlurp** for email-based authentication:
-
-- **Main User**: `playwright-main-user` inbox
-- **Test User**: `playwright-test-user` inbox
-- **Admin User**: Manual setup required (see Admin Setup section)
-
-### Parallel Execution
-
-- **Default**: 3 workers (1 per browser: Chrome, Firefox, Safari)
-- **CI Environment**: 1 worker with 2 retries
-- **Customizable**: Use `--workers=N` flag
-
-## 👨‍💼 Admin Setup (Manual Process)
-
-The admin session requires manual setup due to security considerations:
-
-### Step 1: Run Admin Session Setup
-
-```bash
-npx playwright test tests/helpers/save-admin-session.spec.ts
-```
-
-### Step 2: Manual Authentication
-
-1. The test will open a browser and pause at the sign-in page
-2. **Manually complete the authentication flow** using an admin email account
-3. The test will automatically save the session state to `tests/storage/storage-state-admin.json`
-
-### Step 3: Admin Email Requirements
-
-- Use an email address that has admin privileges in your application
-- Complete the full email verification process manually
-- The session will be reused for subsequent admin tests
-
-### Important Notes
-
-- **DO NOT commit** `storage-state-admin.json` to version control
-- Admin session expires and needs to be regenerated periodically
-- This approach ensures admin credentials are never stored in code
-
-## Test Categories
-
-### Smoke Tests
-
-Quick tests that verify basic functionality without deep testing.
-
-#### `tests/smoke/signin-page/signin.spec.ts`
-
-- **Purpose**: Verifies authentication UI and flow
-- **Coverage**: Sign-in page elements, email validation, verification code flow
-- **Key Tests**:
-  - UI element visibility and behavior
-  - Email input validation
-  - Verification code submission
-  - Terms of Service link functionality
-  - Logout functionality
-
-#### `tests/smoke/main-page/sidebar.spec.ts`
-
-- **Purpose**: Tests sidebar navigation and functionality
-- **Coverage**: Sidebar components, navigation links, menu interactions
-- **Key Tests**:
-  - Sidebar UI elements visibility
-  - Menu toggle functionality
-  - Navigation link correctness
-  - User settings dropdown
-  - Chat history display
-
-#### `tests/smoke/main-page/chat-ui.spec.ts`
-
-- **Purpose**: Verifies main chat interface functionality
-- **Coverage**: Chat input, file attachments, UI interactions
-- **Key Tests**:
-  - Chat UI element visibility
-  - File attachment functionality
-  - Input field behavior
-
-#### `tests/smoke/profile-page/profile.spec.ts`
-
-- **Purpose**: Tests user profile page functionality
-- **Coverage**: Profile information display, account management
-- **Key Tests**:
-  - Profile page elements visibility
-  - Delete account modal functionality
-  - User information display
-
-### Regression Tests
-
-Performance and stability tests that ensure no regressions in critical functionality.
-
-#### `tests/regression/response-aggregation.spec.ts`
-
-- **Purpose**: Tests chat response performance and aggregation
-- **Coverage**: Long message handling, response timing, chat optimization
-- **Key Tests**:
-  - 300 iterations of long message prompts
-  - Average block timing analysis
-  - Response aggregation performance
-
-#### `tests/regression/analyze-final-response-time.spec.ts`
-
-- **Purpose**: Analyzes final response generation timing
-- **Coverage**: Business consultant prompts, response time measurement
-- **Key Tests**:
-  - 10 different business consultation prompts
-  - Final response generation timing
-  - "Save as Final Response" functionality
-
-## Page Object Model
-
-The test suite uses the Page Object Model pattern for maintainable and reusable test code:
-
-### `SigninPage`
-
-- Email input handling
-- Verification code submission
-- Button interactions (Send code, Resend, Use different email)
-
-### `ChatPage` (extends `Sidebar`)
-
-- Chat input and send functionality
-- File attachment handling
-- Message interactions (upvote, downvote, copy)
-- Recording functionality
-- Visibility controls (private/public)
-
-### `ProfilePage`
-
-- Profile information display
-- Account management functionality
-- User settings interactions
-
-### `Sidebar`
-
-- Navigation menu functionality
-- Chat history management
-- User settings dropdown
-- Logo and branding elements
-
-## Helper Classes
-
-### `AuthHelper`
-
-- **Purpose**: Manages authentication for test users
-- **Features**:
-  - MailSlurp integration for email verification
-  - Session state management
-  - Automatic login for main and test users
-  - Inbox management and cleanup
-
-### `generateEmail()`
-
-- **Purpose**: Generates unique email addresses for testing
-- **Usage**: Creates timestamped emails for isolated test runs
-
-## Test Data Management
-
-### Storage Files
-
-- **`storage-state-*.json`**: Authentication session states
-- **`inboxes.json`**: MailSlurp inbox configuration
-- **`test-pdf.pdf`**: Sample file for upload tests
-
-### Environment Configuration
-
-- **`env.ts`**: Centralized environment variable management
-- **Validation**: Ensures required variables are present
-- **Error Handling**: Clear error messages for missing configuration
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failures**
-
-   - Check MailSlurp API key validity
-   - Verify inbox names match configuration
-   - Ensure BASE_URL is accessible
-
-2. **Environment Variable Errors**
-
-   - Verify `.env` file exists and contains all required variables
-   - Check variable names match exactly (case-sensitive)
-
-3. **Parallel Test Issues**
-
-   - Reduce workers if tests interfere: `--workers=1`
-   - Check for shared state between tests
-
-4. **Admin Session Issues**
-   - Re-run admin setup when session expires
-   - Verify admin email has proper permissions
+### 🔧 Test Configuration
+
+Main config: `playwright.config.ts`
+
+- `testDir: "./tests"`
+- `testIgnore: ["regression/**", "helpers/save-admin-session.spec.ts"]`
+- `tsconfig: "./tsconfig.tests.json"`
+- `globalSetup: "./tests/config/global-setup.ts"`
+- `use.baseURL: process.env.BASE_URL`
+- projects: Chromium, Firefox, WebKit
+- `retries: process.env.CI ? 2 : 0`
+- `workers: process.env.CI ? 1 : undefined`
+
+#### Global Setup
+
+`tests/config/global-setup.ts`:
+
+- ensures `tests/storage` directory exists;
+- logs in **main** and **test** users via `Auth` (`tests/helpers/auth.ts`) using:
+  - `BASE_URL`
+  - `MAIN_USER_EMAIL`
+  - `TEST_USER_EMAIL`
+  - `AUTH_CODE`
+- saves storage state to:
+  - `tests/storage/main-user.json`
+  - `tests/storage/test-user.json`
+
+Most smoke tests reuse these files via constants from `tests/config/urls.ts`.
+
+#### Authentication System
+
+- **Primary path (CI and default runs)** — `Auth` (`tests/helpers/auth.ts`):
+  - opens `/signin` on `BASE_URL`;
+  - fills `MAIN_USER_EMAIL` or `TEST_USER_EMAIL`;
+  - types the `AUTH_CODE` into all code inputs;
+  - waits for redirect to `/`.
+- **Additional MailSlurp-based helper** — `AuthHelper` in `tests/helpers/save-session.ts`:
+  - creates/reuses MailSlurp inboxes;
+  - reads the real 6‑digit code from e‑mail;
+  - saves cookies to `tests/storage/main-user.json` / `tests/storage/test-user.json`;
+  - caches inbox definitions in `tests/storage/inboxes.json`.
+
+MailSlurp is handy locally, but **is not used in GitHub Actions by default**.
+
+#### Parallel Execution
+
+- locally: worker count is chosen by Playwright; tests run in three projects (Chromium, Firefox, WebKit);
+- in CI: `workers: 1` and `retries: 2` for stability;
+- you can override using `--workers=N` locally.
+
+### 👨‍💼 Admin Setup (Manual)
+
+The admin session is used in `tests/regression/analyze-final-response-time.spec.ts` and is created manually:
+
+1. Run the session-setup script:
+
+   ```bash
+   pnpm exec playwright test tests/helpers/save-admin-session.spec.ts
+   ```
+
+2. In the opened browser:
+
+   - complete the full admin login flow;
+   - after `page.pause()` resume execution in Playwright UI.
+
+3. The script saves cookies to `tests/storage/storage-state-admin.json`, which regression tests then reuse.
+
+**Important**:
+
+- do **not** commit `storage-state-admin.json` to the repo;
+- when the session expires, rerun the script.
+
+### Test Categories
+
+#### Smoke Tests (`tests/smoke`)
+
+Fast checks for critical flows:
+
+- `signin-page/signin.spec.ts`
+  - sign‑in screen UI and behavior;
+  - e‑mail validation, toasts, verification-code form;
+  - Terms of Service links;
+  - `Continue as guest` and logout flows.
+- `main-page/sidebar.spec.ts`
+  - navigation via sidebar to core sections;
+  - theme switching;
+  - current user e‑mail display;
+  - sidebar behavior for guest vs authenticated users.
+- `main-page/chat-ui.spec.ts`
+  - visibility and state of main chat UI elements;
+  - file upload and preview;
+  - upvote / downvote / copy buttons, clipboard checks;
+  - chat privacy (private / public) and access by other users;
+  - guest chat limits and “chat not found” modal.
+- `profile-page/profile.spec.ts`
+  - “My Account” block and user e‑mail;
+  - “Danger Zone” and delete-account modal;
+  - enabling delete only after typing `DELETE`.
+- `stratsync-page/stratsync.spec.ts`
+  - switching StratSync dashboard tabs (company / personal);
+  - basic checks for dashboard creation controls.
+
+#### Regression Tests (`tests/regression`)
+
+Performance‑sensitive and heavy scenarios:
+
+- `response-aggregation.spec.ts`
+  - login as main user via `Auth`;
+  - multiple long-message sends;
+  - response-time measurement and aggregated logging.
+- `analyze-final-response-time.spec.ts`
+  - flows via admin UI and `Run the Business` section;
+  - generating a set of responses with “Save as Final Response”;
+  - working with Response Aggregation and measuring thinking/response time.
+
+### Page Object Model
+
+Tests are built around POM for readability and reuse:
+
+- **`SigninPage`**
+  - e‑mail and verification-code inputs;
+  - “Send verification code”, “Resend code”, “Use a different email”;
+  - `continueAsGuest` helper that navigates to the main page.
+- **`Sidebar`**
+  - “Take the Assessment”, “Run the Business”, “Response Aggregation” links;
+  - user menu, theme toggle, logout;
+  - chat controls (More menu, delete chat, etc.).
+- **`ChatPage`** (extends `Sidebar`)
+  - sending messages and interacting with `/api/chat`;
+  - chat privacy (Private / Public);
+  - attachments, preview, upvote/downvote/copy actions;
+  - “Thinking…” locator and helper elements for timing analysis;
+  - “Chat not found” modal.
+- **`ProfilePage`**
+  - delete-account modal and `DELETE` confirmation input.
+- **`StratsyncDashboardPage`**
+  - switching between “Company Dashboard” and “My StratSync”;
+  - buttons for creating new dashboards.
+
+### Helper Classes
+
+- **`Auth` (`tests/helpers/auth.ts`)**
+  - simple login helper using a known `AUTH_CODE`;
+  - `loginAsMainUser` / `loginAsTestUser`, consumed by `global-setup` and regression tests.
+- **`generateEmail()`**
+  - unique e‑mail generator for UI-only login/modals;
+  - used where full authentication is not required.
+
+### Test Data Management
+
+- **Storage files**
+  - `tests/storage/main-user.json`, `tests/storage/test-user.json` — auth cookies created in `global-setup`.
+  - `tests/storage/storage-state-admin.json` — admin session, created manually via `save-admin-session.spec.ts`.
+- **Data files**
+  - `tests/data/test-pdf.pdf` — sample file for upload scenarios.
+
+### CI / GitHub Actions
+
+Workflow `.github/workflows/playwright.yml`:
+
+- triggers:
+  - `repository_dispatch` from Vercel (`vercel.deployment.success`);
+  - `workflow_dispatch` with inputs:
+    - `deployment_url` — arbitrary URL to test against;
+    - `run_full_suite` — `false` (smoke only) or `true` (full suite).
+- steps:
+  - install dependencies via `pnpm install`;
+  - cache Playwright browsers;
+  - compute `TEST_URL` (from `deployment_url` or `BASE_URL` variable);
+  - run tests:
+    - smoke: `pnpm exec playwright test tests/smoke --reporter=list,html --workers=2`;
+    - full: `pnpm exec playwright test --reporter=list,html --workers=2`;
+  - upload artifacts: HTML report (`playwright-report`) and traces (`test-results`).
+
+Environment variables in the workflow match those described above (`BASE_URL`, `AI_LEADERSHIP_URL`, `MAIN_USER_EMAIL`, `TEST_USER_EMAIL`, `AUTH_CODE`).
+
+### Troubleshooting
+
+1. **Auth issues**
+   - ensure `BASE_URL` points to a live environment;
+   - verify `MAIN_USER_EMAIL`, `TEST_USER_EMAIL` and `AUTH_CODE` match that environment.
+2. **Environment configuration errors**
+   - ensure `.env` exists and all variables are set;
+   - in CI, check `Settings → Secrets and variables → Actions`.
+3. **Parallel execution problems**
+   - if tests are flaky, try `--workers=1`;
+   - make sure tests do not share mutable global state.
+4. **Admin session**
+   - if admin regression tests fail due to auth, recreate `storage-state-admin.json` using the Admin Setup section.
 
 ### Debug Mode
 
 ```bash
-# Run specific test in debug mode
-npx playwright test tests/smoke/signin-page/signin.spec.ts --debug
+# Specific test in debug mode
+pnpm exec playwright test tests/smoke/signin-page/signin.spec.ts --debug
 
-# Run with browser visible
-npx playwright test --headed --workers=1
+# Headed browser with a single worker
+pnpm exec playwright test --headed --workers=1
 ```
 
-## Performance Considerations
+### Contributing & Best Practices
 
-- **Parallel Execution**: Default 3 workers balance speed vs. resource usage
-- **Session Reuse**: Authentication state is cached to avoid repeated logins
-- **MailSlurp Optimization**: Inboxes are reused and emails are cleaned up
-- **Timeout Configuration**: 30-second timeouts for actions and navigation
-
-## Security Notes
-
-- **No Hardcoded Credentials**: All authentication uses environment variables
-- **Session State**: Stored locally and not committed to version control
-- **Admin Access**: Requires manual setup with proper admin credentials
-- **Email Cleanup**: Test emails are automatically deleted after use
-
-## Contributing
-
-When adding new tests:
-
-1. **Follow the existing structure** (smoke vs. regression)
-2. **Use Page Object Model** for maintainability
-3. **Add proper test descriptions** and steps
-4. **Update this README** with new test information
-5. **Ensure tests are independent** and can run in parallel
-
-## Best Practices
-
-- **Test Independence**: Each test should be able to run standalone
-- **Clear Naming**: Use descriptive test and describe block names
-- **Proper Assertions**: Use appropriate Playwright assertions
-- **Error Handling**: Include meaningful error messages
-- **Resource Cleanup**: Clean up test data and browser state
+- **Structure**: place new tests into the existing hierarchy (smoke / regression, subfolders per page/area).
+- **POM**: move selectors and interactions into Page Objects.
+- **Independence**: tests should be idempotent and order‑independent.
+- **Naming**: use descriptive `describe` / `test` names that reflect business value.
+- **Assertions**: use `expect` with clear conditions and timeouts.
+- **README**: update this file when adding major new test areas.
