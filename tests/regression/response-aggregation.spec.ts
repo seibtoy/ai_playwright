@@ -1,8 +1,8 @@
-import { test } from "@playwright/test";
-import { Auth } from "@/tests/helpers/auth";
-import { ChatPage } from "@/tests/pages/chat-page";
+import { test } from '@playwright/test';
+import { Auth } from '@/tests/helpers/auth';
+import { ChatPage } from '@/tests/pages/chat-page';
 
-test.describe("Chat optimization", () => {
+test.describe('Chat optimization', () => {
   let chatPage: ChatPage;
   let authHelper: Auth;
 
@@ -14,11 +14,11 @@ test.describe("Chat optimization", () => {
   });
 
   // eslint-disable-next-line playwright/expect-expect
-  test("Long message prompt 300 times with avg block timing", async () => {
+  test('Long message prompt 300 times with avg block timing', async () => {
     test.setTimeout(0);
 
     const longMessagePrompt =
-      "Hey, write me a message that simply fills 2000 symbols";
+      'Hey, write me a message that simply fills 2000 symbols';
 
     const responseTimes: { iteration: number; avgResponseTimeMs: number }[] =
       [];
@@ -29,10 +29,10 @@ test.describe("Chat optimization", () => {
     const sendMessage = async (iteration: number) => {
       await test.step(`Iteration ${iteration}: fill and send message`, async () => {
         await chatPage.input
-          .waitFor({ state: "visible", timeout: 20000 })
+          .waitFor({ state: 'visible', timeout: 20000 })
           .catch(() => {
             throw new Error(
-              `Input field not found at iteration ${iteration}. Page may have crashed.`
+              `Input field not found at iteration ${iteration}. Page may have crashed.`,
             );
           });
 
@@ -42,7 +42,7 @@ test.describe("Chat optimization", () => {
         const startTime = Date.now();
         await chatPage.sendButton.click();
         await chatPage.recordingButton.waitFor({
-          state: "visible",
+          state: 'visible',
           timeout: 0,
         });
         const elapsed = Date.now() - startTime;
@@ -51,7 +51,7 @@ test.describe("Chat optimization", () => {
       });
     };
 
-    await test.step("Send multiple long messages", async () => {
+    await test.step('Send multiple long messages', async () => {
       for (let i = 1; i <= totalIterations; i++) {
         await sendMessage(i);
 
@@ -62,8 +62,8 @@ test.describe("Chat optimization", () => {
 
           console.log(
             `[${i}/${totalIterations}] Avg iteration time = ${avg.toFixed(
-              2
-            )} ms`
+              2,
+            )} ms`,
           );
 
           batch = [];
@@ -71,27 +71,27 @@ test.describe("Chat optimization", () => {
       }
     });
 
-    await test.step("Log final results", async () => {
-      console.log("Final results:");
+    await test.step('Log final results', async () => {
+      console.log('Final results:');
       console.log(JSON.stringify(responseTimes, null, 2));
     });
   });
 
   // eslint-disable-next-line playwright/expect-expect
-  test("Send 15 different prompts 10 times each, check response time, thinking time and typing time and check for jailbreak trigger", async () => {
+  test('Send 15 different prompts 10 times each, check response time, thinking time and typing time and check for jailbreak trigger', async () => {
     test.setTimeout(0);
 
     const prompts = [
-      "Imagine you are a business consultant. Explain in detail the key steps an entrepreneur should take when starting a small business, including market research, financial planning, and initial team building. Provide practical examples and actionable advice.",
-      "As a leadership coach, describe how a manager can improve team productivity in a remote work environment. Include strategies for communication, task management, and motivation, with examples.",
-      "Provide a detailed analysis of common mistakes new business owners make when launching a product. Explain how these mistakes can affect growth and suggest ways to avoid them.",
-      "Imagine you are advising a startup founder. Outline strategies for attracting early customers and building a strong brand presence online. Include concrete marketing tactics and examples.",
-      "Explain how small businesses can effectively manage cash flow during the first year of operation. Include budgeting tips, cost-cutting strategies, and common pitfalls to avoid.",
-      "As a leadership expert, describe how to handle conflicts within a team to maintain productivity and morale. Provide examples of mediation and communication strategies.",
-      "Provide advice on scaling a business from a small team to a medium-sized company. Include considerations for hiring, delegating responsibilities, and maintaining company culture.",
-      "Describe effective methods for setting and achieving business goals. Explain how to track progress, adjust strategies, and maintain team motivation over time.",
-      "Imagine you are a business strategist. Explain how to identify new opportunities in a competitive market, including analyzing trends, customer behavior, and competitor activity.",
-      "Provide a guide for improving leadership skills in entrepreneurs, including time management, decision-making, and delegation. Include actionable exercises and real-life examples.",
+      'Imagine you are a business consultant. Explain in detail the key steps an entrepreneur should take when starting a small business, including market research, financial planning, and initial team building. Provide practical examples and actionable advice.',
+      'As a leadership coach, describe how a manager can improve team productivity in a remote work environment. Include strategies for communication, task management, and motivation, with examples.',
+      'Provide a detailed analysis of common mistakes new business owners make when launching a product. Explain how these mistakes can affect growth and suggest ways to avoid them.',
+      'Imagine you are advising a startup founder. Outline strategies for attracting early customers and building a strong brand presence online. Include concrete marketing tactics and examples.',
+      'Explain how small businesses can effectively manage cash flow during the first year of operation. Include budgeting tips, cost-cutting strategies, and common pitfalls to avoid.',
+      'As a leadership expert, describe how to handle conflicts within a team to maintain productivity and morale. Provide examples of mediation and communication strategies.',
+      'Provide advice on scaling a business from a small team to a medium-sized company. Include considerations for hiring, delegating responsibilities, and maintaining company culture.',
+      'Describe effective methods for setting and achieving business goals. Explain how to track progress, adjust strategies, and maintain team motivation over time.',
+      'Imagine you are a business strategist. Explain how to identify new opportunities in a competitive market, including analyzing trends, customer behavior, and competitor activity.',
+      'Provide a guide for improving leadership skills in entrepreneurs, including time management, decision-making, and delegation. Include actionable exercises and real-life examples.',
     ];
 
     const jailbreakTrigger =
@@ -113,10 +113,10 @@ test.describe("Chat optimization", () => {
 
       for (let i = 1; i <= runsPerPrompt; i++) {
         try {
-          await chatPage.input.waitFor({ state: "visible", timeout: 20000 });
+          await chatPage.input.waitFor({ state: 'visible', timeout: 20000 });
         } catch {
           throw new Error(
-            `Input field not found for prompt ${p}, iteration ${i}. Page may have crashed (e.g. 404).`
+            `Input field not found for prompt ${p}, iteration ${i}. Page may have crashed (e.g. 404).`,
           );
         }
 
@@ -127,19 +127,19 @@ test.describe("Chat optimization", () => {
         await chatPage.sendButton.click();
 
         await chatPage.thinkingLocator.waitFor({
-          state: "visible",
+          state: 'visible',
           timeout: 0,
         });
         const thinkingStart = Date.now();
 
         await chatPage.thinkingLocator.waitFor({
-          state: "detached",
+          state: 'detached',
           timeout: 0,
         });
         const thinkingEnd = Date.now();
 
         await chatPage.recordingButton.waitFor({
-          state: "visible",
+          state: 'visible',
           timeout: 0,
         });
         const endTime = Date.now();
@@ -154,7 +154,7 @@ test.describe("Chat optimization", () => {
         // eslint-disable-next-line playwright/no-conditional-in-test
         if (hasText) {
           console.log(
-            `Jailbreak triggered for prompt ${p + 1} on iteration ${i}`
+            `Jailbreak triggered for prompt ${p + 1} on iteration ${i}`,
           );
         }
 
@@ -164,7 +164,7 @@ test.describe("Chat optimization", () => {
         console.log(
           `[Prompt ${p + 1}/${
             prompts.length
-          }] Iteration ${i}/${runsPerPrompt} → Response = ${elapsed} ms, Thinking = ${thinkingTime} ms`
+          }] Iteration ${i}/${runsPerPrompt} → Response = ${elapsed} ms, Thinking = ${thinkingTime} ms`,
         );
       }
 
@@ -185,12 +185,12 @@ test.describe("Chat optimization", () => {
         `Finished prompt ${p + 1}/${
           prompts.length
         }, Avg Response = ${avgResponse.toFixed(
-          2
-        )} ms, Avg Thinking = ${avgThinking.toFixed(2)} ms`
+          2,
+        )} ms, Avg Thinking = ${avgThinking.toFixed(2)} ms`,
       );
     }
 
-    console.log("Final results:");
+    console.log('Final results:');
     console.log(JSON.stringify(responseTimes, null, 2));
   });
 });

@@ -1,5 +1,5 @@
-import { type Page, type Locator, expect } from "@playwright/test";
-import { Sidebar } from "@/tests/pages/sidebar-component";
+import { expect, type Locator, type Page } from '@playwright/test';
+import { Sidebar } from '@/tests/pages/sidebar-component';
 
 export class ChatPage extends Sidebar {
   readonly input: Locator;
@@ -30,46 +30,46 @@ export class ChatPage extends Sidebar {
 
   constructor(page: Page) {
     super(page);
-    this.input = page.getByTestId("multimodal-input");
-    this.sendButton = page.getByTestId("send-button");
+    this.input = page.getByTestId('multimodal-input');
+    this.sendButton = page.getByTestId('send-button');
 
-    this.recordingButton = page.getByRole("button", {
-      name: "Start recording",
+    this.recordingButton = page.getByRole('button', {
+      name: 'Start recording',
     });
-    this.recordingButtonWebkit = page.getByRole("button", {
-      name: "Start recording",
+    this.recordingButtonWebkit = page.getByRole('button', {
+      name: 'Start recording',
     });
 
-    this.privateButton = page.getByRole("button", { name: "Private" });
-    this.publicButton = page.getByRole("button", { name: "Public" });
+    this.privateButton = page.getByRole('button', { name: 'Private' });
+    this.publicButton = page.getByRole('button', { name: 'Public' });
 
-    this.messageContent = page.getByTestId("message-content");
-    this.newChatButton = page.getByRole("button", { name: "New Chat" });
+    this.messageContent = page.getByTestId('message-content');
+    this.newChatButton = page.getByRole('button', { name: 'New Chat' });
     this.feedbackButton = page.locator('button[data-slot="popover-trigger"]');
-    this.attachmentsButton = page.getByTestId("attachments-button");
-    this.upvoteButton = page.getByTestId("message-upvote");
-    this.downvoteButton = page.getByTestId("message-downvote");
+    this.attachmentsButton = page.getByTestId('attachments-button');
+    this.upvoteButton = page.getByTestId('message-upvote');
+    this.downvoteButton = page.getByTestId('message-downvote');
     this.copyButton = page
-      .getByTestId("message-assistant")
-      .getByRole("button")
+      .getByTestId('message-assistant')
+      .getByRole('button')
       .first();
-    this.inputAttachmentPreview = page.getByTestId("input-attachment-preview");
-    this.thinkingLocator = page.getByText("Thinking...");
-    this.saveAsFinalResponseButton = page.getByRole("button", {
-      name: "Save as Final Response",
+    this.inputAttachmentPreview = page.getByTestId('input-attachment-preview');
+    this.thinkingLocator = page.getByText('Thinking...');
+    this.saveAsFinalResponseButton = page.getByRole('button', {
+      name: 'Save as Final Response',
     });
-    this.pageNotFoundText = page.getByRole("heading", {
-      name: "This page could not be found.",
+    this.pageNotFoundText = page.getByRole('heading', {
+      name: 'This page could not be found.',
     });
     this.chatNotFoundModal = page
-      .locator("div")
-      .filter({ hasText: "Chat not foundThis" })
+      .locator('div')
+      .filter({ hasText: 'Chat not foundThis' })
       .nth(3);
-    this.startANewChatButtonInModal = page.getByRole("link", {
-      name: "Start a new chat",
+    this.startANewChatButtonInModal = page.getByRole('link', {
+      name: 'Start a new chat',
     });
-    this.refreshPageButtonInModal = page.getByRole("button", {
-      name: "Refresh",
+    this.refreshPageButtonInModal = page.getByRole('button', {
+      name: 'Refresh',
     });
   }
 
@@ -83,7 +83,7 @@ export class ChatPage extends Sidebar {
 
     await this.sendButton.click();
 
-    await this.recordingButton.waitFor({ state: "visible" });
+    await this.recordingButton.waitFor({ state: 'visible' });
   }
 
   async sendMessageViaAPI(message: string) {
@@ -96,8 +96,8 @@ export class ChatPage extends Sidebar {
 
     const responsePromise = this.page.waitForResponse(
       (response) =>
-        response.url().includes("/api/chat") &&
-        response.request().method() === "POST"
+        response.url().includes('/api/chat') &&
+        response.request().method() === 'POST',
     );
 
     await this.sendButton.click();
@@ -109,12 +109,12 @@ export class ChatPage extends Sidebar {
   async createNewChat() {
     await this.newChatButton.click();
 
-    await expect(this.page.getByText("Hello there!")).toBeVisible({
+    await expect(this.page.getByText('Hello there!')).toBeVisible({
       timeout: 3000,
     });
 
-    await expect(this.page.getByText("What’s top of mind for you")).toBeVisible(
-      { timeout: 3000 }
+    await expect(this.page.getByText('What’s top of mind for you')).toBeVisible(
+      { timeout: 3000 },
     );
 
     // await this.page.waitForTimeout(500);

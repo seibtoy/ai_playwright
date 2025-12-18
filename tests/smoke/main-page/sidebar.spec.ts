@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { URLS } from "@/tests/config/urls";
+import { generateEmail } from "@/tests/helpers/generate-email";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { SigninPage } from "@/tests/pages/signin-page";
-import { generateEmail } from "@/tests/helpers/generate-email";
-import { URLS } from "@/tests/config/urls";
 
 test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
@@ -29,9 +29,12 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
 
     await test.step("Check if displayed user email is correct", async () => {
       const currentUserInboxName = process.env.MAIN_USER_EMAIL;
+      if (!currentUserInboxName) {
+        throw new Error("MAIN_USER_EMAIL environment variable is not set");
+      }
       await expect(
-        page.getByRole("button").filter({ hasText: currentUserInboxName! })
-      ).toContainText(currentUserInboxName!);
+        page.getByRole("button").filter({ hasText: currentUserInboxName })
+      ).toContainText(currentUserInboxName);
     });
 
     await test.step("Check sidebar menu button", async () => {
