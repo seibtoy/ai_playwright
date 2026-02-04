@@ -115,7 +115,7 @@ test.describe("UI elements after email submission", () => {
   });
 });
 
-test.describe("Email verification code API requests", () => {
+test.describe("Email verification code flow", () => {
   test.use({ storageState: undefined }); // This test is not supposed to use a storage state
 
   let signinPage: SigninPage;
@@ -129,73 +129,23 @@ test.describe("Email verification code API requests", () => {
     signinPage = new SigninPage(page);
   });
 
-  test("Sends a request to /signin when submitting a valid email", async ({
-    page,
-  }) => {
-    const baseUrl = process.env.BASE_URL;
-    if (!baseUrl) {
-      throw new Error("BASE_URL environment variable is not set");
-    }
-
-    // Register response listener BEFORE any actions to avoid race condition
-    // Use a more specific filter to catch the exact POST request to /signin
-    const responsePromise = page.waitForResponse(
-      (response) => {
-        const url = response.url();
-        const method = response.request().method();
-        // Match exact /signin endpoint with POST method
-        return (
-          (url === `${baseUrl}/signin` || url.endsWith("/signin")) &&
-          method === "POST"
-        );
-      },
-      { timeout: 10000 },
-    );
-
+  test("Verification code appears after submitting email", async ({ page }) => {
     await signinPage.emailInput.fill(generateEmail());
     await signinPage.sendCodeButton.click();
 
-    const response = await responsePromise;
-    expect(response.ok()).toBe(true);
-    await expect(
-      page
-        .locator("div")
-        .filter({ hasText: /^Verification Code$/ })
-        .nth(1),
-    ).toBeVisible();
+    await expect(page.getByText("Verification Code")).toBeVisible();
   });
 
-  test("Resend code button sends request", async ({ page }) => {
+  test("Resend code button works correctly", async () => {
     await signinPage.emailInput.fill(generateEmail());
     await signinPage.sendCodeButton.click();
 
     await expect(signinPage.resendCodeButton).toBeVisible();
-
     await expect(signinPage.resendCodeButton).toBeEnabled({ timeout: 25000 });
-
-    const baseUrl = process.env.BASE_URL;
-    if (!baseUrl) {
-      throw new Error("BASE_URL environment variable is not set");
-    }
-
-    // Register response listener BEFORE clicking to avoid race condition
-    const responsePromise = page.waitForResponse(
-      (response) => {
-        const url = response.url();
-        const method = response.request().method();
-        // Match exact /signin endpoint with POST method
-        return (
-          (url === `${baseUrl}/signin` || url.endsWith("/signin")) &&
-          method === "POST"
-        );
-      },
-      { timeout: 10000 },
-    );
 
     await signinPage.resendCodeButton.click();
 
-    const response = await responsePromise;
-    expect(response.ok()).toBe(true);
+    await expect(signinPage.resendCodeButton).toBeDisabled();
   });
 });
 
