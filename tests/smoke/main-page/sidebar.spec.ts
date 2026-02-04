@@ -17,8 +17,8 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
   test("Verifies sidebar UI elements", async ({ page }) => {
     await test.step("Check main sidebar links and texts", async () => {
       await expect(sidebar.logoLink).toBeVisible();
-      await expect(page.getByText("Strategy & Tools")).toBeVisible();
-      await expect(sidebar.takeAssessmentLink).toBeVisible();
+      await expect(sidebar.meetingOptimazerLink).toBeVisible();
+      await expect(sidebar.stratSyncLink).toBeVisible();
       await expect(sidebar.runBusinessLink).toBeVisible();
     });
 
@@ -33,7 +33,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
         throw new Error("MAIN_USER_EMAIL environment variable is not set");
       }
       await expect(
-        page.getByRole("button").filter({ hasText: currentUserInboxName })
+        page.getByRole("button").filter({ hasText: currentUserInboxName }),
       ).toContainText(currentUserInboxName);
     });
 
@@ -41,7 +41,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
       await expect(
         page.locator('button[data-sidebar="menu-button"]', {
           has: page.locator("div.truncate"),
-        })
+        }),
       ).toBeVisible();
     });
   });
@@ -86,23 +86,16 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
       await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
     });
 
-    await test.step("Take the Assessment button redirects to proper link", async () => {
-      const TaketheAssessmentPagePromise = page.waitForEvent("popup");
-      await sidebar.takeAssessmentLink.click();
-      const TaketheAssessmentPage = await TaketheAssessmentPagePromise;
-
-      const currentUrl = new URL(TaketheAssessmentPage.url());
-      const expectedUrl = new URL(
-        `${process.env.AI_LEADERSHIP_URL}/ai-leader-benchmark`
-      );
-
-      expect(`${currentUrl.origin}${currentUrl.pathname}`).toBe(
-        `${expectedUrl.origin}${expectedUrl.pathname}`
-      );
-
-      await TaketheAssessmentPage.close();
+    await test.step("Meeting Optimizer button redirects to proper link", async () => {
+      await sidebar.meetingOptimazerLink.click();
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/meeting-optimizer`);
     });
-
+    await test.step("StratSync button redirects to proper link", async () => {
+      await sidebar.stratSyncLink.click();
+      await expect(page).toHaveURL(
+        `${process.env.BASE_URL}/dashboard/stratsync`,
+      );
+    });
     await test.step("Run the Business button redirects to proper link", async () => {
       await sidebar.runBusinessLink.click();
       await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
@@ -113,9 +106,8 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     page,
   }) => {
     const theme = await sidebar.getTheme();
-    const dropdownState = await sidebar.settingsDropdown.getAttribute(
-      "data-state"
-    );
+    const dropdownState =
+      await sidebar.settingsDropdown.getAttribute("data-state");
 
     await test.step("Open the user settings dropdown", async () => {
       // eslint-disable-next-line playwright/no-conditional-in-test
@@ -124,7 +116,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
         // eslint-disable-next-line playwright/no-conditional-expect
         await expect(sidebar.settingsDropdown).toHaveAttribute(
           "data-state",
-          "open"
+          "open",
         );
       } else return;
     });
@@ -149,28 +141,28 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     await test.step("Terms of Service", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Terms of Service",
-        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`,
       );
     });
 
     await test.step("Privacy Policy", async () => {
       await sidebar.clickMenuLinkAndAssertPopup(
         "Privacy Policy",
-        `${process.env.AI_LEADERSHIP_URL}/privacy-policy`
+        `${process.env.AI_LEADERSHIP_URL}/privacy-policy`,
       );
     });
 
     await test.step("My Account", async () => {
       await sidebar.clickMenuLinkAndAssertRedirect(
         "My Account",
-        `${process.env.BASE_URL}/profile`
+        `${process.env.BASE_URL}/profile`,
       );
     });
 
     await test.step("Logout", async () => {
       await sidebar.clickMenuLinkAndAssertRedirect(
         "Sign out",
-        `${process.env.BASE_URL}/signin`
+        `${process.env.BASE_URL}/signin`,
       );
     });
   });
@@ -206,11 +198,11 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
       await sidebar.chatActionsDropdown.first().click();
       await expect(page.getByRole("menu", { name: "More" })).toBeVisible();
       await expect(
-        page.getByRole("menuitem", { name: "Rename" })
+        page.getByRole("menuitem", { name: "Rename" }),
       ).toBeVisible();
       await expect(page.getByRole("menuitem", { name: "Share" })).toBeVisible();
       await expect(
-        page.getByRole("menuitem", { name: "Delete" })
+        page.getByRole("menuitem", { name: "Delete" }),
       ).toBeVisible();
     });
   });
@@ -230,7 +222,6 @@ test.describe("Verifies all sidebar components and their behavior in case when u
   });
 
   test("Verifies the sidebar UI elements", async ({ page }) => {
-    await expect(page.getByText("Strategy & Tools")).toBeVisible();
     await expect(sidebar.runBusinessLink).toBeVisible();
     await expect(page.getByText("You are using the guest")).toBeVisible();
     await expect(sidebar.createAccountButton).toBeVisible();
@@ -279,7 +270,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
     await test.step("Click the 'Sign in / Create account' button and open the sign in modal", async () => {
       await sidebar.createAccountButton.click();
       await expect(
-        page.getByRole("dialog", { name: "Sign in to AITP" })
+        page.getByRole("dialog", { name: "Sign in to AITP" }),
       ).toBeVisible();
     });
 
@@ -299,7 +290,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
       const newPage = await newPagePromise;
 
       await expect(newPage).toHaveURL(
-        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`,
       );
 
       await newPage.close();
@@ -311,7 +302,6 @@ test.describe("Verifies all sidebar components and their behavior in case when u
       await sidebar.createAccountButton.click();
     });
 
-    // We dont authenticate fully here, to economize mailSlurp API resources
     await test.step("Fill in the email input and click the 'Send code' button", async () => {
       const email = generateEmail();
       await signinPage.emailInput.fill(email);

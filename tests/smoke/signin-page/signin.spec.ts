@@ -18,7 +18,7 @@ test.describe("UI elements before email submission", () => {
     await expect(page.getByRole("img")).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { name: "Sign in to AITP" })
+      page.getByRole("heading", { name: "Sign in to AITP" }),
     ).toBeVisible();
 
     await expect(page.getByText("Enter your email and we'll")).toBeVisible();
@@ -42,11 +42,11 @@ test.describe("UI elements before email submission", () => {
 
       const currentUrl = new URL(termsOfServicePage.url());
       const expectedUrl = new URL(
-        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`
+        `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`,
       );
 
       expect(`${currentUrl.origin}${currentUrl.pathname}`).toBe(
-        `${expectedUrl.origin}${expectedUrl.pathname}`
+        `${expectedUrl.origin}${expectedUrl.pathname}`,
       );
 
       await termsOfServicePage.close();
@@ -94,13 +94,13 @@ test.describe("UI elements after email submission", () => {
     await signinPage.emailInput.fill(generateEmail());
     await signinPage.sendCodeButton.click();
 
-    await expect(page.getByRole("img").nth(1)).toBeVisible();
+    await expect(page.getByRole("img", { name: "Logo" })).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Enter verification code" })
+      page.getByRole("heading", { name: "Enter verification code" }),
     ).toBeVisible();
     await expect(page.getByText("We've sent a 6-digit code to")).toBeVisible();
     await expect(
-      page.getByText("Verification Code", { exact: true })
+      page.getByText("Verification Code", { exact: true }),
     ).toBeVisible();
     await expect(page.getByText("Didn't receive the code?")).toBeVisible();
     await expect(signinPage.resendCodeButton).toBeVisible();
@@ -149,7 +149,7 @@ test.describe("Email verification code API requests", () => {
           method === "POST"
         );
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     await signinPage.emailInput.fill(generateEmail());
@@ -161,7 +161,7 @@ test.describe("Email verification code API requests", () => {
       page
         .locator("div")
         .filter({ hasText: /^Verification Code$/ })
-        .nth(1)
+        .nth(1),
     ).toBeVisible();
   });
 
@@ -189,7 +189,7 @@ test.describe("Email verification code API requests", () => {
           method === "POST"
         );
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     await signinPage.resendCodeButton.click();
@@ -254,7 +254,7 @@ test.describe("Smoke check log out", () => {
       await test.step("Logout", async () => {
         await sidebar.clickMenuLinkAndAssertRedirect(
           "Sign out",
-          `${process.env.BASE_URL}/signin`
+          `${process.env.BASE_URL}/signin`,
         );
         await expect(page).toHaveURL(`${process.env.BASE_URL}/signin`);
       });
