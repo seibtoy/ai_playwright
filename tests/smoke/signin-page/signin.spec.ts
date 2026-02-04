@@ -171,6 +171,8 @@ test.describe("Email verification code API requests", () => {
 
     await expect(signinPage.resendCodeButton).toBeVisible();
 
+    await expect(signinPage.resendCodeButton).toBeEnabled({ timeout: 25000 });
+
     const baseUrl = process.env.BASE_URL;
     if (!baseUrl) {
       throw new Error("BASE_URL environment variable is not set");

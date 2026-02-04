@@ -15,7 +15,6 @@ export class Sidebar {
   readonly sidebar: Locator;
   readonly settingsDropdown: Locator;
   readonly adminMenuItem: Locator;
-  readonly responseAggregationLink: Locator;
 
   readonly chatActionsDropdown: Locator;
   readonly deleteChatButton: Locator;
@@ -54,9 +53,6 @@ export class Sidebar {
       'button[data-sidebar="menu-button"][data-slot="dropdown-menu-trigger"]',
     );
     this.adminMenuItem = page.getByRole('menuitem', { name: 'Admin' });
-    this.responseAggregationLink = page.getByRole('link', {
-      name: 'Response Aggregation',
-    });
     this.chatActionsDropdown = page.locator(
       "button[data-sidebar='menu-action'][data-slot='dropdown-menu-trigger']",
     );

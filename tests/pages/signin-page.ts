@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page } from "@playwright/test";
 
 export class SigninPage {
   readonly page: Page;
@@ -12,20 +12,20 @@ export class SigninPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.getByRole('textbox', { name: 'Email Address' });
-    this.sendCodeButton = page.getByRole('button', {
-      name: 'Send verification code',
+    this.emailInput = page.getByRole("textbox", { name: "Email Address" });
+    this.sendCodeButton = page.getByRole("button", {
+      name: "Send verification code",
     });
-    this.termsOfServiceLink = page.getByText('Terms of Service');
-    this.resendCodeButton = page.getByRole('button', { name: 'Resend code' });
-    this.useDifferentEmailButton = page.getByRole('button', {
-      name: 'Use a different email',
+    this.termsOfServiceLink = page.getByText("Terms of Service");
+    this.resendCodeButton = page.getByRole("button", { name: "Resend code" });
+    this.useDifferentEmailButton = page.getByRole("button", {
+      name: "Use a different email",
     });
     this.verificationCodeInputGroup = page
-      .getByRole('group', { name: 'Verification code' })
-      .locator('input');
-    this.continueAsGuestButton = page.getByRole('button', {
-      name: 'Continue as guest',
+      .getByRole("group", { name: "Verification code" })
+      .locator("input");
+    this.continueAsGuestButton = page.getByRole("button", {
+      name: "Continue as guest",
     });
   }
 
