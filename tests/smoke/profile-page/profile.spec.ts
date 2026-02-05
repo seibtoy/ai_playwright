@@ -49,6 +49,68 @@ test.describe("Verify all profile page elements are visible and work correctly",
     });
   });
 
+  test("Verify all integrations block elements are visible and works correctly", async ({
+    page,
+  }) => {
+    await test.step("Verify integrations header is visible", async () => {
+      await expect(profilePage.integrationsHeader).toBeVisible();
+    });
+
+    await test.step("Verify all calendar cards are visible", async () => {
+      await expect(profilePage.getCalendarCard("Microsoft")).toBeVisible();
+      await expect(profilePage.getCalendarCard("Google")).toBeVisible();
+      await expect(profilePage.getCalendarCard("Apple")).toBeVisible();
+    });
+
+    await test.step("Verify Connect buttons are enabled", async () => {
+      await expect(
+        profilePage.getCalendarConnectButton("Microsoft"),
+      ).toBeEnabled();
+      await expect(
+        profilePage.getCalendarConnectButton("Google"),
+      ).toBeEnabled();
+      await expect(profilePage.getCalendarConnectButton("Apple")).toBeEnabled();
+    });
+
+    await test.step("Verify Google Calendar redirects to OAuth", async () => {
+      const [request] = await Promise.all([
+        page.waitForRequest((req) => req.url().includes("accounts.google.com")),
+        profilePage.getCalendarConnectButton("Google").click(),
+      ]);
+
+      const url = new URL(request.url());
+      expect(url.hostname).toBe("accounts.google.com");
+      expect(url.searchParams.get("scope")).toContain("calendar");
+      expect(url.searchParams.get("redirect_uri")).toContain("nylas.com");
+    });
+
+    await test.step("Verify Microsoft Calendar redirects to OAuth", async () => {
+      await page.goto(`${process.env.BASE_URL}/profile`);
+
+      const [request] = await Promise.all([
+        page.waitForRequest((req) => req.url().includes("login.live.com")),
+        profilePage.getCalendarConnectButton("Microsoft").click(),
+      ]);
+
+      const url = new URL(request.url());
+      expect(url.hostname).toBe("login.live.com");
+      expect(url.searchParams.get("redirect_uri")).toContain("nylas.com");
+    });
+
+    await test.step("Verify Apple Calendar redirects to Nylas", async () => {
+      await page.goto(`${process.env.BASE_URL}/profile`);
+
+      const [request] = await Promise.all([
+        page.waitForRequest((req) => req.url().includes("api.us.nylas.com")),
+        profilePage.getCalendarConnectButton("Apple").click(),
+      ]);
+
+      const url = new URL(request.url());
+      expect(url.hostname).toBe("api.us.nylas.com");
+      expect(url.searchParams.get("provider")).toBe("icloud");
+    });
+  });
+
   test("Verify delete account buttons shows modal with correct content", async ({
     page,
   }) => {

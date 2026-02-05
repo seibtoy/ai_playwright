@@ -17,9 +17,12 @@ export class ChatPage extends Sidebar {
   readonly newChatButton: Locator;
   readonly feedbackButton: Locator;
   readonly attachmentsButton: Locator;
+
   readonly upvoteButton: Locator;
   readonly downvoteButton: Locator;
   readonly copyButton: Locator;
+  readonly exportPDFButton: Locator;
+
   readonly inputAttachmentPreview: Locator;
   readonly thinkingLocator: Locator;
   readonly saveAsFinalResponseButton: Locator;
@@ -53,12 +56,18 @@ export class ChatPage extends Sidebar {
     this.newChatButton = page.getByRole("button", { name: "New Chat" });
     this.feedbackButton = page.locator('button[data-slot="popover-trigger"]');
     this.attachmentsButton = page.getByTestId("attachments-button");
+
     this.upvoteButton = page.getByTestId("message-upvote");
     this.downvoteButton = page.getByTestId("message-downvote");
     this.copyButton = page
       .getByTestId("message-assistant")
       .getByRole("button")
       .first();
+    this.exportPDFButton = page
+      .getByTestId("message-assistant")
+      .getByRole("button")
+      .nth(1);
+
     this.inputAttachmentPreview = page.getByTestId("input-attachment-preview");
     this.thinkingLocator = page.getByText("Thinking...");
     this.saveAsFinalResponseButton = page.getByRole("button", {

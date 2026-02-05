@@ -13,6 +13,24 @@ test.describe("User interacts with chat UI", () => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
+  test("Verifies visibility and behavior of chat UI elements before sending the first message", async ({
+    page,
+  }) => {
+    await test.step("Verify that action buttons is visible", async () => {
+      await expect(chatPage.newMeetingOprimizerButton).toBeVisible();
+      await expect(chatPage.myStrarSyncButton).toBeVisible();
+    });
+    await test.step("Verify that New Meeting Optimizer button leads to the correct page", async () => {
+      await chatPage.newMeetingOprimizerButton.click();
+      await expect(page).toHaveURL(/chat_id=[a-f0-9-]+/);
+      await page.goto(`${process.env.BASE_URL}/`);
+    });
+    await test.step("Verify that My StratSync button leads to the correct page", async () => {
+      await chatPage.myStrarSyncButton.click();
+      await expect(page).toHaveURL(/dashboard\/stratsync/);
+    });
+  });
+
   test("Verifies visibility and behavior of main chat UI elements when the chat is started", async () => {
     await test.step("Send message to the chat for display the UI", async () => {
       await chatPage.sendMessageViaAPI("Hello");
@@ -110,6 +128,15 @@ test.describe("Check if action buttons in chat works correctly", () => {
         // eslint-disable-next-line playwright/no-conditional-expect
         expect(clipboardText.trim().length).toBeGreaterThan(0);
       }
+    });
+
+    await test.step("Click on export PDF button and verify that PDF file is exporting", async () => {
+      const downloadPromise = page.waitForEvent("download");
+      await chatPage.exportPDFButton.click();
+      const download = await downloadPromise;
+
+      expect(download.suggestedFilename()).toContain(".pdf");
+      expect(await download.failure()).toBeNull();
     });
     await context.close();
   });

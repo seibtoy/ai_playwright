@@ -40,6 +40,7 @@ export class Sidebar {
 
     this.meetingOptimazerLink = page.getByRole("link", {
       name: "Meeting Optimizer",
+      exact: true,
     });
 
     this.stratSyncLink = page.getByRole("link", {
