@@ -4,27 +4,27 @@ import { generateEmail } from "@/tests/helpers/generate-email";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { SigninPage } from "@/tests/pages/signin-page";
 
-test.describe("Verifies all sidebar components and their behavior when no chats started", () => {
+test.describe("Sidebar: elements without active chat", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
-  let sidebar: ChatPage;
+  let chatPage: ChatPage;
 
   test.beforeEach(async ({ page }) => {
-    sidebar = new ChatPage(page);
+    chatPage = new ChatPage(page);
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verifies sidebar UI elements", async ({ page }) => {
+  test("Should display sidebar UI elements", async ({ page }) => {
     await test.step("Check main sidebar links and texts", async () => {
-      await expect(sidebar.logoLink).toBeVisible();
-      await expect(sidebar.meetingOptimazerLink).toBeVisible();
-      await expect(sidebar.stratSyncLink).toBeVisible();
-      await expect(sidebar.runBusinessLink).toBeVisible();
+      await expect(chatPage.logoLink).toBeVisible();
+      await expect(chatPage.meetingOptimizerLink).toBeVisible();
+      await expect(chatPage.stratSyncLink).toBeVisible();
+      await expect(chatPage.runBusinessLink).toBeVisible();
     });
 
     await test.step("Check AITP Memory block", async () => {
       await expect(page.getByText("AITP Memory")).toBeVisible();
-      await expect(sidebar.importExternalMemoryButton).toBeVisible();
+      await expect(chatPage.importExternalMemoryButton).toBeVisible();
     });
 
     await test.step("Check if displayed user email is correct", async () => {
@@ -46,7 +46,7 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
     });
   });
 
-  test("Verifies sidebar menu toggles correctly", async ({ page }) => {
+  test("Should toggle sidebar menu correctly", async ({ page }) => {
     const sidebarState =
       await test.step("Get current sidebar state", async () => {
         return await page
@@ -54,67 +54,67 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
           .getAttribute("data-state");
       });
 
-    await test.step("Send message to the chat for display the menu", async () => {
-      await sidebar.sendMessageViaAPI("Hello");
+    await test.step("Send message to display the menu", async () => {
+      await chatPage.sendMessageViaAPI("Hello");
     });
 
     await test.step("Find toggle button", async () => {
-      await expect(sidebar.toggleButton).toBeVisible();
+      await expect(chatPage.toggleButton).toBeVisible();
     });
 
     await test.step("Toggle sidebar and validate state", async () => {
-      await sidebar.toggleButton.click();
+      await chatPage.toggleButton.click();
       // eslint-disable-next-line playwright/no-conditional-in-test
       if (sidebarState === "open") {
         // eslint-disable-next-line playwright/no-conditional-expect
-        await expect(sidebar.sidebar).toHaveAttribute("data-state", "closed");
-        await sidebar.toggleButton.click();
+        await expect(chatPage.sidebar).toHaveAttribute("data-state", "closed");
+        await chatPage.toggleButton.click();
         // eslint-disable-next-line playwright/no-conditional-expect
-        await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
+        await expect(chatPage.sidebar).toHaveAttribute("data-state", "open");
       } else {
         // eslint-disable-next-line playwright/no-conditional-expect
-        await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
+        await expect(chatPage.sidebar).toHaveAttribute("data-state", "open");
       }
     });
   });
 
-  test("Ensures all sidebar links navigate to the correct pages", async ({
+  test("Should navigate to correct pages via sidebar links", async ({
     page,
   }) => {
     await test.step("Logo image redirects to the main page", async () => {
-      await sidebar.logoLink.click();
+      await chatPage.logoLink.click();
       await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
     });
 
     await test.step("Meeting Optimizer button redirects to proper link", async () => {
-      await sidebar.meetingOptimazerLink.click();
+      await chatPage.meetingOptimizerLink.click();
       await expect(page).toHaveURL(`${process.env.BASE_URL}/meeting-optimizer`);
     });
     await test.step("StratSync button redirects to proper link", async () => {
-      await sidebar.stratSyncLink.click();
+      await chatPage.stratSyncLink.click();
       await expect(page).toHaveURL(
         `${process.env.BASE_URL}/dashboard/stratsync`,
       );
     });
     await test.step("Run the Business button redirects to proper link", async () => {
-      await sidebar.runBusinessLink.click();
+      await chatPage.runBusinessLink.click();
       await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
     });
   });
 
-  test("User settings dropdown menu: UI and navigation test", async ({
+  test("Should display and navigate user settings dropdown menu", async ({
     page,
   }) => {
-    const theme = await sidebar.getTheme();
+    const theme = await chatPage.getTheme();
     const dropdownState =
-      await sidebar.settingsDropdown.getAttribute("data-state");
+      await chatPage.settingsDropdown.getAttribute("data-state");
 
     await test.step("Open the user settings dropdown", async () => {
       // eslint-disable-next-line playwright/no-conditional-in-test
       if (dropdownState === "closed") {
-        await sidebar.settingsDropdown.click();
+        await chatPage.settingsDropdown.click();
         // eslint-disable-next-line playwright/no-conditional-expect
-        await expect(sidebar.settingsDropdown).toHaveAttribute(
+        await expect(chatPage.settingsDropdown).toHaveAttribute(
           "data-state",
           "open",
         );
@@ -126,41 +126,41 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
       if (theme === "dark") {
         await page.getByRole("menuitem", { name: "Toggle light mode" }).click();
 
-        const newTheme = await sidebar.getTheme();
+        const newTheme = await chatPage.getTheme();
         // eslint-disable-next-line playwright/no-conditional-expect
         expect(newTheme).toBe("light");
       } else {
         await page.getByRole("menuitem", { name: "Toggle dark mode" }).click();
 
-        const newTheme = await sidebar.getTheme();
+        const newTheme = await chatPage.getTheme();
         // eslint-disable-next-line playwright/no-conditional-expect
         expect(newTheme).toBe("dark");
       }
     });
 
     await test.step("Terms of Service", async () => {
-      await sidebar.clickMenuLinkAndAssertPopup(
+      await chatPage.clickMenuLinkAndAssertPopup(
         "Terms of Service",
         `${process.env.AI_LEADERSHIP_URL}/legal/aitp-terms-of-service`,
       );
     });
 
     await test.step("Privacy Policy", async () => {
-      await sidebar.clickMenuLinkAndAssertPopup(
+      await chatPage.clickMenuLinkAndAssertPopup(
         "Privacy Policy",
         `${process.env.AI_LEADERSHIP_URL}/privacy-policy`,
       );
     });
 
     await test.step("My Account", async () => {
-      await sidebar.clickMenuLinkAndAssertRedirect(
+      await chatPage.clickMenuLinkAndAssertRedirect(
         "My Account",
         `${process.env.BASE_URL}/profile`,
       );
     });
 
     await test.step("Logout", async () => {
-      await sidebar.clickMenuLinkAndAssertRedirect(
+      await chatPage.clickMenuLinkAndAssertRedirect(
         "Sign out",
         `${process.env.BASE_URL}/signin`,
       );
@@ -168,34 +168,34 @@ test.describe("Verifies all sidebar components and their behavior when no chats 
   });
 });
 
-test.describe("Verifies all sidebar components and their behavior when chats started", () => {
+test.describe("Sidebar: elements with active chat", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
-  let sidebar: ChatPage;
+  let chatPage: ChatPage;
 
   test.beforeEach(async ({ page }) => {
-    sidebar = new ChatPage(page);
+    chatPage = new ChatPage(page);
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verifies the chats created in the sidebar", async ({ page }) => {
+  test("Should display created chats in the sidebar", async ({ page }) => {
     await test.step("Check that the sidebar is visible", async () => {
-      await expect(sidebar.sidebar).toHaveAttribute("data-state", "open");
+      await expect(chatPage.sidebar).toHaveAttribute("data-state", "open");
     });
 
     await test.step("Check the input is visible", async () => {
-      await expect(sidebar.input).toBeVisible();
+      await expect(chatPage.input).toBeVisible();
     });
 
     await test.step("Write a prompt in the chat input", async () => {
-      await sidebar.sendMessage("Hello");
+      await chatPage.sendMessage("Hello");
     });
 
     await test.step("Get last chat in the sidebar", async () => {
-      await expect(sidebar.chatActionsDropdown.first()).toBeVisible();
+      await expect(chatPage.chatActionsDropdown.first()).toBeVisible();
     });
 
     await test.step("Check the chat dropdown menu opens", async () => {
-      await sidebar.chatActionsDropdown.first().click();
+      await chatPage.chatActionsDropdown.first().click();
       await expect(page.getByRole("menu", { name: "More" })).toBeVisible();
       await expect(
         page.getByRole("menuitem", { name: "Rename" }),
@@ -208,67 +208,73 @@ test.describe("Verifies all sidebar components and their behavior when chats sta
   });
 });
 
-test.describe("Verifies all sidebar components and their behavior in case when user IS GUEST", () => {
+test.describe("Sidebar: guest user elements", () => {
   test.use({ storageState: undefined }); // This test is not supposed to use a storage state
 
-  let sidebar: ChatPage;
+  let chatPage: ChatPage;
   let signinPage: SigninPage;
 
   test.beforeEach(async ({ page }) => {
-    sidebar = new ChatPage(page);
+    chatPage = new ChatPage(page);
     signinPage = new SigninPage(page);
 
     await signinPage.continueAsGuest(page);
   });
 
-  test("Verifies the sidebar UI elements", async ({ page }) => {
-    await expect(sidebar.runBusinessLink).toBeVisible();
-    await expect(page.getByText("You are using the guest")).toBeVisible();
-    await expect(sidebar.createAccountButton).toBeVisible();
-    await expect(sidebar.toggleThemeButton).toBeVisible();
+  test("Should display guest sidebar UI elements", async ({ page }) => {
+    await test.step("Verify guest-specific sidebar elements are visible", async () => {
+      await expect(chatPage.runBusinessLink).toBeVisible();
+      await expect(page.getByText("You are using the guest")).toBeVisible();
+      await expect(chatPage.createAccountButton).toBeVisible();
+      await expect(chatPage.toggleThemeButton).toBeVisible();
+    });
   });
 
-  test("Verifies that 'Run the Business' button redirects to the proper page", async ({
+  test("Should redirect to proper page via 'Run the Business' link", async ({
     page,
   }) => {
-    await sidebar.runBusinessLink.click();
-    await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
+    await test.step("Click 'Run the Business' and verify URL", async () => {
+      await chatPage.runBusinessLink.click();
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
+    });
   });
 
-  test("Verifies that theme mode can be toggled", async () => {
-    const theme = await sidebar.getTheme();
+  test("Should toggle theme mode", async () => {
+    await test.step("Toggle theme and verify it changes", async () => {
+      const theme = await chatPage.getTheme();
 
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (theme === "dark") {
-      await sidebar.toggleThemeButton.click();
+      // eslint-disable-next-line playwright/no-conditional-in-test
+      if (theme === "dark") {
+        await chatPage.toggleThemeButton.click();
 
-      const newTheme = await sidebar.getTheme();
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(newTheme).toBe("light");
+        const newTheme = await chatPage.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(newTheme).toBe("light");
 
-      await sidebar.toggleThemeButton.click();
-      const newNewTheme = await sidebar.getTheme();
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(newNewTheme).toBe("dark");
-    } else {
-      await sidebar.toggleThemeButton.click();
+        await chatPage.toggleThemeButton.click();
+        const newNewTheme = await chatPage.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(newNewTheme).toBe("dark");
+      } else {
+        await chatPage.toggleThemeButton.click();
 
-      const newTheme = await sidebar.getTheme();
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(newTheme).toBe("dark");
+        const newTheme = await chatPage.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(newTheme).toBe("dark");
 
-      await sidebar.toggleThemeButton.click();
-      const newNewTheme = await sidebar.getTheme();
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(newNewTheme).toBe("light");
-    }
+        await chatPage.toggleThemeButton.click();
+        const newNewTheme = await chatPage.getTheme();
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(newNewTheme).toBe("light");
+      }
+    });
   });
 
-  test("Verifies that 'Sign in / Create account' button opens the sign in modal and all components are visible", async ({
+  test("Should open sign-in modal via 'Sign in / Create account' button", async ({
     page,
   }) => {
     await test.step("Click the 'Sign in / Create account' button and open the sign in modal", async () => {
-      await sidebar.createAccountButton.click();
+      await chatPage.createAccountButton.click();
       await expect(
         page.getByRole("dialog", { name: "Sign in to AITP" }),
       ).toBeVisible();
@@ -286,7 +292,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
     await test.step("Check that 'Terms of Service' link leads to the proper page", async () => {
       const newPagePromise = page.waitForEvent("popup");
 
-      await sidebar.termsOfServiceLink.click();
+      await chatPage.termsOfServiceLink.click();
       const newPage = await newPagePromise;
 
       await expect(newPage).toHaveURL(
@@ -297,9 +303,9 @@ test.describe("Verifies all sidebar components and their behavior in case when u
     });
   });
 
-  test("Verifies that user can sign in with email in 'Sign in / Create account' modal", async () => {
+  test("Should allow sign-in with email via 'Sign in / Create account' modal", async () => {
     await test.step("Click the 'Sign in / Create account' button and open the sign in modal", async () => {
-      await sidebar.createAccountButton.click();
+      await chatPage.createAccountButton.click();
     });
 
     await test.step("Fill in the email input and click the 'Send code' button", async () => {
@@ -307,7 +313,7 @@ test.describe("Verifies all sidebar components and their behavior in case when u
       await signinPage.emailInput.fill(email);
       await expect(signinPage.sendCodeButton).toBeEnabled();
       await signinPage.sendCodeButton.click();
-      await expect(sidebar.verificationCodeInputGroup).toBeVisible();
+      await expect(chatPage.verificationCodeInputGroup).toBeVisible();
     });
   });
 });

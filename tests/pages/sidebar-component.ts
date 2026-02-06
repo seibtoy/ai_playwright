@@ -8,9 +8,8 @@ export class Sidebar {
   readonly verificationCodeInputGroup: Locator;
 
   readonly logoLink: Locator;
-  readonly takeAssessmentLink: Locator;
   readonly runBusinessLink: Locator;
-  readonly meetingOptimazerLink: Locator;
+  readonly meetingOptimizerLink: Locator;
   readonly stratSyncLink: Locator;
   readonly importExternalMemoryButton: Locator;
   readonly toggleButton: Locator;
@@ -38,7 +37,7 @@ export class Sidebar {
       name: "Verification code",
     });
 
-    this.meetingOptimazerLink = page.getByRole("link", {
+    this.meetingOptimizerLink = page.getByRole("link", {
       name: "Meeting Optimizer",
       exact: true,
     });
@@ -49,9 +48,6 @@ export class Sidebar {
     });
 
     this.logoLink = page.getByRole("link", { name: "Logo" });
-    this.takeAssessmentLink = page.getByRole("link", {
-      name: "Take the Assessment",
-    });
     this.runBusinessLink = page.getByRole("link", { name: "Run the Business" });
     this.importExternalMemoryButton = page.getByRole("button", {
       name: "Import External Memory",

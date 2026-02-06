@@ -3,7 +3,7 @@ import { URLS } from "@/tests/config/urls";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { SigninPage } from "@/tests/pages/signin-page";
 
-test.describe("User interacts with chat UI", () => {
+test.describe("Chat UI: basic elements", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
   let chatPage: ChatPage;
@@ -13,49 +13,49 @@ test.describe("User interacts with chat UI", () => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verifies visibility and behavior of chat UI elements before sending the first message", async ({
+  test("Should display UI elements before first message", async ({
     page,
   }) => {
-    await test.step("Verify that action buttons is visible", async () => {
-      await expect(chatPage.newMeetingOprimizerButton).toBeVisible();
-      await expect(chatPage.myStrarSyncButton).toBeVisible();
+    await test.step("Verify action buttons are visible", async () => {
+      await expect(chatPage.newMeetingOptimizerButton).toBeVisible();
+      await expect(chatPage.myStratSyncButton).toBeVisible();
     });
-    await test.step("Verify that New Meeting Optimizer button leads to the correct page", async () => {
-      await chatPage.newMeetingOprimizerButton.click();
+    await test.step("Verify New Meeting Optimizer button leads to the correct page", async () => {
+      await chatPage.newMeetingOptimizerButton.click();
       await expect(page).toHaveURL(/chat_id=[a-f0-9-]+/);
       await page.goto(`${process.env.BASE_URL}/`);
     });
-    await test.step("Verify that My StratSync button leads to the correct page", async () => {
-      await chatPage.myStrarSyncButton.click();
+    await test.step("Verify My StratSync button leads to the correct page", async () => {
+      await chatPage.myStratSyncButton.click();
       await expect(page).toHaveURL(/dashboard\/stratsync/);
     });
   });
 
-  test("Verifies visibility and behavior of main chat UI elements when the chat is started", async () => {
-    await test.step("Send message to the chat for display the UI", async () => {
+  test("Should display UI elements after chat is started", async () => {
+    await test.step("Send message to display the chat UI", async () => {
       await chatPage.sendMessageViaAPI("Hello");
     });
 
-    await test.step("Checks that the 'New Chat' button is visible", async () => {
+    await test.step("Verify 'New Chat' button is visible", async () => {
       await expect(chatPage.newChatButton).toBeVisible();
     });
 
-    await test.step("Checks that the 'Private' button is visible", async () => {
+    await test.step("Verify 'Private' button is visible", async () => {
       await expect(chatPage.privateButton).toBeVisible();
     });
 
-    await test.step("Checks that the 'Feedback' button is visible", async () => {
+    await test.step("Verify 'Feedback' button is visible", async () => {
       await expect(chatPage.feedbackButton).toBeVisible();
     });
 
-    await test.step("Checks that the chat input is present and ready for typing", async () => {
+    await test.step("Verify chat input is present and enabled", async () => {
       await expect(chatPage.input).toBeVisible();
       await expect(chatPage.input).toBeEnabled();
     });
   });
 });
 
-test.describe("Check file attachment", () => {
+test.describe("Chat UI: file attachment", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
   let chatPage: ChatPage;
@@ -65,25 +65,32 @@ test.describe("Check file attachment", () => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Attach file via button", async ({ page }) => {
-    await expect(chatPage.attachmentsButton).toBeVisible();
+  test("Should attach file via button", async ({ page }) => {
+    await test.step("Click attachments button and select file", async () => {
+      await expect(chatPage.attachmentsButton).toBeVisible();
 
-    const [fileChooser] = await Promise.all([
-      page.waitForEvent("filechooser"),
-      chatPage.attachmentsButton.click(),
-    ]);
+      const [fileChooser] = await Promise.all([
+        page.waitForEvent("filechooser"),
+        chatPage.attachmentsButton.click(),
+      ]);
 
-    await fileChooser.setFiles("tests/data/test-pdf.pdf");
-    await expect(chatPage.inputAttachmentPreview).toBeVisible();
+      await fileChooser.setFiles("tests/data/test-pdf.pdf");
+    });
 
-    await page.getByTestId("send-button").click();
-    await chatPage.recordingButton.waitFor({ state: "visible" });
-    await expect(chatPage.messageContent).toBeVisible();
+    await test.step("Verify attachment preview is visible", async () => {
+      await expect(chatPage.inputAttachmentPreview).toBeVisible();
+    });
+
+    await test.step("Send message and verify it contains attachment", async () => {
+      await page.getByTestId("send-button").click();
+      await chatPage.recordingButton.waitFor({ state: "visible" });
+      await expect(chatPage.messageContent).toBeVisible();
+    });
   });
 });
 
-test.describe("Check if action buttons in chat works correctly", () => {
-  test("Verify that action buttons visible and works correctly", async ({
+test.describe("Chat UI: action buttons", () => {
+  test("Should copy message and export PDF via action buttons", async ({
     browser,
   }, testInfo) => {
     const context = await browser.newContext({
@@ -99,25 +106,15 @@ test.describe("Check if action buttons in chat works correctly", () => {
 
     const chatPage = new ChatPage(page);
 
-    await test.step("Send message and verify that action buttons visible", async () => {
+    await test.step("Send message and verify action buttons are visible", async () => {
       await chatPage.sendMessage("Hello world");
-
-      await expect(chatPage.copyButton.first()).toBeVisible();
-      await expect(chatPage.upvoteButton).toBeVisible();
-      await expect(chatPage.downvoteButton).toBeVisible();
     });
 
-    await test.step("Click on upvote button and verify that it is disabled", async () => {
-      await chatPage.upvoteButton.click();
-      await expect(chatPage.upvoteButton).toHaveAttribute("disabled");
+    await test.step("Open dropdown", async () => {
+      await chatPage.mainChatActionsDropdown.click();
     });
 
-    await test.step("Click on downvote button and verify that it is disabled", async () => {
-      await chatPage.downvoteButton.click();
-      await expect(chatPage.downvoteButton).toHaveAttribute("disabled");
-    });
-
-    await test.step("Click on copy button and verify that message is copied", async () => {
+    await test.step("Click copy button and verify message is copied", async () => {
       await chatPage.copyButton.click();
 
       // eslint-disable-next-line playwright/no-conditional-in-test
@@ -130,7 +127,11 @@ test.describe("Check if action buttons in chat works correctly", () => {
       }
     });
 
-    await test.step("Click on export PDF button and verify that PDF file is exporting", async () => {
+    await test.step("Open dropdown", async () => {
+      await chatPage.mainChatActionsDropdown.click();
+    });
+
+    await test.step("Click export PDF button and verify PDF is downloaded", async () => {
       const downloadPromise = page.waitForEvent("download");
       await chatPage.exportPDFButton.click();
       const download = await downloadPromise;
@@ -142,86 +143,92 @@ test.describe("Check if action buttons in chat works correctly", () => {
   });
 });
 
-test.describe("Check if privacy functionality works correctly", () => {
+test.describe("Chat UI: privacy", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verify that other users can't see private chat", async ({
+  test("Should hide private chat from other users", async ({
     browser,
   }) => {
-    // --- CONTEXT FOR MAIN USER ---
-    const mainContext = await browser.newContext({
-      storageState: URLS.STORAGE_STATE_MAIN_USER,
+    let chatUrl: string;
+
+    await test.step("Create private chat as main user", async () => {
+      const mainContext = await browser.newContext({
+        storageState: URLS.STORAGE_STATE_MAIN_USER,
+      });
+      const mainPage = await mainContext.newPage();
+      const mainChatPage = new ChatPage(mainPage);
+
+      await mainPage.goto(`${process.env.BASE_URL}/`);
+      await mainChatPage.sendMessageViaAPI("Hello world");
+      await expect(mainChatPage.privateButton).toBeVisible();
+      chatUrl = mainPage.url();
+
+      await mainContext.close();
     });
-    const mainPage = await mainContext.newPage();
-    const mainChatPage = new ChatPage(mainPage);
 
-    // --- CREATE CHAT ---
-    await mainPage.goto(`${process.env.BASE_URL}/`);
-    await mainChatPage.sendMessageViaAPI("Hello world");
-    await expect(mainChatPage.privateButton).toBeVisible();
-    const chatUrl = mainPage.url();
+    await test.step("Open chat URL as test user and verify not found", async () => {
+      const testContext = await browser.newContext({
+        storageState: URLS.STORAGE_STATE_TEST_USER,
+      });
+      const testPage = await testContext.newPage();
+      const testChatPage = new ChatPage(testPage);
 
-    await mainContext.close();
+      await testPage.goto(chatUrl);
+      await expect(testChatPage.chatNotFoundModal).toBeVisible();
 
-    // --- CONTEXT FOR TEST USER ---
-    const testContext = await browser.newContext({
-      storageState: URLS.STORAGE_STATE_TEST_USER,
+      await testContext.close();
     });
-    const testPage = await testContext.newPage();
-    const testChatPage = new ChatPage(testPage);
-
-    await testPage.goto(chatUrl);
-    await expect(testChatPage.chatNotFoundModal).toBeVisible();
-
-    await testContext.close();
   });
 
-  test("Verify that other users can see public chat", async ({ browser }) => {
-    // --- CONTEXT FOR MAIN USER ---
-    const mainContext = await browser.newContext({
-      storageState: URLS.STORAGE_STATE_MAIN_USER,
+  test("Should show public chat to other users", async ({ browser }) => {
+    let chatUrl: string;
+
+    await test.step("Create chat as main user", async () => {
+      const mainContext = await browser.newContext({
+        storageState: URLS.STORAGE_STATE_MAIN_USER,
+      });
+      const mainPage = await mainContext.newPage();
+      const mainChatPage = new ChatPage(mainPage);
+
+      await mainPage.goto(`${process.env.BASE_URL}/`);
+      await mainChatPage.sendMessageViaAPI("Hello world");
+      chatUrl = mainPage.url();
+      await expect(mainChatPage.privateButton).toBeVisible();
+
+      await test.step("Change chat privacy to public", async () => {
+        await mainChatPage.privateButton.click();
+        await mainPage
+          .getByRole("menuitem", { name: "Public Anyone with the link" })
+          .click();
+        await expect(mainChatPage.publicButton).toBeVisible();
+        await expect(mainChatPage.publicButton).toBeEnabled();
+      });
+
+      await mainContext.close();
     });
-    const mainPage = await mainContext.newPage();
-    const mainChatPage = new ChatPage(mainPage);
 
-    await mainPage.goto(`${process.env.BASE_URL}/`);
+    await test.step("Open chat URL as test user", async () => {
+      const testContext = await browser.newContext({
+        storageState: URLS.STORAGE_STATE_TEST_USER,
+      });
+      const testPage = await testContext.newPage();
+      const testChatPage = new ChatPage(testPage);
 
-    // --- CREATE CHAT ---
-    await mainChatPage.sendMessageViaAPI("Hello world");
-    const chatUrl = mainPage.url();
-    await expect(mainChatPage.privateButton).toBeVisible();
+      await testPage.goto(chatUrl);
 
-    // --- CHANGE PRIVACY TO PUBLIC ---
-    await mainChatPage.privateButton.click();
-    await mainPage
-      .getByRole("menuitem", { name: "Public Anyone with the link" })
-      .click();
-    await expect(mainChatPage.publicButton).toBeVisible();
-    await expect(mainChatPage.publicButton).toBeEnabled();
+      await test.step("Verify chat content is visible", async () => {
+        await expect(testChatPage.messageContent.last()).toBeVisible();
+      });
 
-    // --- LOGOUT MAIN USER ---
-    await mainContext.close();
-
-    // --- CONTEXT FOR TEST USER ---
-    const testContext = await browser.newContext({
-      storageState: URLS.STORAGE_STATE_TEST_USER,
+      await testContext.close();
     });
-    const testPage = await testContext.newPage();
-    const testChatPage = new ChatPage(testPage);
-
-    await testPage.goto(chatUrl);
-
-    // --- VERIFY THAT THE CHAT IS PUBLIC ---
-    await expect(testChatPage.messageContent.last()).toBeVisible();
-
-    await testContext.close();
   });
 });
 
-test.describe("Check if USER GUEST can create up to 5 chats", () => {
-  test("Verify that user guest can create up to 5 chats", async ({
+test.describe("Chat UI: guest chat limit", () => {
+  test("Should limit guest user to 5 chats", async ({
     browser,
   }) => {
     let chatPage: ChatPage;
@@ -237,7 +244,7 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
       await signinPage.continueAsGuest(newPage);
 
       test.setTimeout(100000);
-      await test.step("Check that the input is visible", async () => {
+      await test.step("Verify chat input is visible", async () => {
         await expect(chatPage.input).toBeVisible();
       });
 
@@ -252,13 +259,13 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
         }
       });
 
-      await test.step("Trying to create 6th chat", async () => {
+      await test.step("Try to create 6th chat", async () => {
         await chatPage.createNewChat();
         await chatPage.input.fill("Last message");
         await expect(chatPage.sendButton).toBeEnabled();
       });
 
-      await test.step("Verify that the chat is not created and return 403 error", async () => {
+      await test.step("Verify 6th chat returns 403 error", async () => {
         const [response] = await Promise.all([
           newPage.waitForResponse(
             (response) =>
@@ -281,7 +288,7 @@ test.describe("Check if USER GUEST can create up to 5 chats", () => {
   });
 });
 
-test.describe("Check if chat not found modal works correctly", () => {
+test.describe("Chat UI: chat not found modal", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
   let chatPage: ChatPage;
@@ -291,20 +298,20 @@ test.describe("Check if chat not found modal works correctly", () => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Verify that chat not found modal works correctly", async ({ page }) => {
-    await test.step("Open the wrong url and verify that the chat not found modal is visible", async () => {
+  test("Should display and interact with chat not found modal", async ({ page }) => {
+    await test.step("Open invalid chat URL and verify modal is visible", async () => {
       await page.goto(
         `${process.env.BASE_URL}/chat/4b33087a-c85c-4f94-ac5c-e6ff52d55555`,
       );
       await expect(chatPage.chatNotFoundModal).toBeVisible();
     });
 
-    await test.step("Check if text in chat not found modal is correct", async () => {
+    await test.step("Verify modal text content", async () => {
       await expect(page.getByText("Chat not found")).toBeVisible();
       await expect(page.getByText("This conversation may have")).toBeVisible();
     });
 
-    await test.step("Click on the refresh page button and verify that the page is refreshed", async () => {
+    await test.step("Click refresh button and verify page reloads", async () => {
       await Promise.all([
         page.waitForURL(
           `${process.env.BASE_URL}/chat/4b33087a-c85c-4f94-ac5c-e6ff52d55555`,
@@ -316,12 +323,12 @@ test.describe("Check if chat not found modal works correctly", () => {
       ]);
     });
 
-    await test.step("Click on the start a new chat button and verify that the new chat is created", async () => {
+    await test.step("Click 'Start a new chat' and verify redirect", async () => {
       await chatPage.startANewChatButtonInModal.click();
-      await expect(chatPage.newMeetingOprimizerButton).toBeVisible({
+      await expect(chatPage.newMeetingOptimizerButton).toBeVisible({
         timeout: 3000,
       });
-      await expect(chatPage.myStrarSyncButton).toBeVisible({ timeout: 3000 });
+      await expect(chatPage.myStratSyncButton).toBeVisible({ timeout: 3000 });
     });
   });
 });

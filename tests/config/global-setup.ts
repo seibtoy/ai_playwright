@@ -1,8 +1,8 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { chromium } from '@playwright/test';
-import { Auth } from '../helpers/auth';
-import { URLS } from './urls';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { chromium } from "@playwright/test";
+import { Auth } from "../helpers/auth";
+import { URLS } from "./urls";
 
 export default async function globalSetup() {
   const storageDir = path.resolve(URLS.STORAGE_PATH);

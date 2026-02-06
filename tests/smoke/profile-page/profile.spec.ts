@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { URLS } from "@/tests/config/urls";
 import { ProfilePage } from "@/tests/pages/profile-page";
 
-test.describe("Verify all profile page elements are visible and work correctly", () => {
+test.describe("Profile: page elements and functionality", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
   let profilePage: ProfilePage;
@@ -12,13 +12,13 @@ test.describe("Verify all profile page elements are visible and work correctly",
     await page.goto(`${process.env.BASE_URL}/profile`);
   });
 
-  test("Verify all profile page elements are visible", async ({ page }) => {
+  test("Should display all profile page elements", async ({ page }) => {
     const currentUserInboxName = process.env.MAIN_USER_EMAIL;
     if (!currentUserInboxName) {
       throw new Error("MAIN_USER_EMAIL environment variable is not set");
     }
 
-    await test.step("Check if header if visible", async () => {
+    await test.step("Check if header is visible", async () => {
       await expect(
         page.getByRole("heading", { name: "My Account" }),
       ).toBeVisible();
@@ -49,7 +49,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
     });
   });
 
-  test("Verify all integrations block elements are visible and works correctly", async ({
+  test("Should display integrations block elements and work correctly", async ({
     page,
   }) => {
     await test.step("Verify integrations header is visible", async () => {
@@ -111,7 +111,7 @@ test.describe("Verify all profile page elements are visible and work correctly",
     });
   });
 
-  test("Verify delete account buttons shows modal with correct content", async ({
+  test("Should show delete account modal with correct content", async ({
     page,
   }) => {
     await test.step("Open delete account modal", async () => {

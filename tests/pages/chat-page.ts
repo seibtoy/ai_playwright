@@ -6,20 +6,18 @@ export class ChatPage extends Sidebar {
   readonly sendButton: Locator;
 
   readonly recordingButton: Locator;
-  readonly recordingButtonWebkit: Locator;
 
   readonly privateButton: Locator;
   readonly publicButton: Locator;
-  readonly newMeetingOprimizerButton: Locator;
-  readonly myStrarSyncButton: Locator;
+  readonly newMeetingOptimizerButton: Locator;
+  readonly myStratSyncButton: Locator;
 
   readonly messageContent: Locator;
   readonly newChatButton: Locator;
   readonly feedbackButton: Locator;
   readonly attachmentsButton: Locator;
 
-  readonly upvoteButton: Locator;
-  readonly downvoteButton: Locator;
+  readonly mainChatActionsDropdown: Locator;
   readonly copyButton: Locator;
   readonly exportPDFButton: Locator;
 
@@ -41,32 +39,27 @@ export class ChatPage extends Sidebar {
     this.recordingButton = page.getByRole("button", {
       name: "Start recording",
     });
-    this.recordingButtonWebkit = page.getByRole("button", {
-      name: "Start recording",
-    });
 
     this.privateButton = page.getByRole("button", { name: "Private" });
     this.publicButton = page.getByRole("button", { name: "Public" });
-    this.newMeetingOprimizerButton = page.getByRole("button", {
+    this.newMeetingOptimizerButton = page.getByRole("button", {
       name: "New Meeting Optimizer",
     });
-    this.myStrarSyncButton = page.getByRole("link", { name: "My StratSync" });
+    this.myStratSyncButton = page.getByRole("link", { name: "My StratSync" });
 
     this.messageContent = page.getByTestId("message-content");
     this.newChatButton = page.getByRole("button", { name: "New Chat" });
     this.feedbackButton = page.locator('button[data-slot="popover-trigger"]');
     this.attachmentsButton = page.getByTestId("attachments-button");
 
-    this.upvoteButton = page.getByTestId("message-upvote");
-    this.downvoteButton = page.getByTestId("message-downvote");
-    this.copyButton = page
-      .getByTestId("message-assistant")
-      .getByRole("button")
-      .first();
-    this.exportPDFButton = page
-      .getByTestId("message-assistant")
-      .getByRole("button")
-      .nth(1);
+    this.mainChatActionsDropdown = page
+      .locator('button[data-slot="dropdown-menu-trigger"]')
+      .last();
+
+    this.copyButton = page.getByRole("menuitem", { name: "Copy" });
+    this.exportPDFButton = page.getByRole("menuitem", {
+      name: "Export to PDF",
+    });
 
     this.inputAttachmentPreview = page.getByTestId("input-attachment-preview");
     this.thinkingLocator = page.getByText("Thinking...");
@@ -124,7 +117,7 @@ export class ChatPage extends Sidebar {
   async createNewChat() {
     await this.newChatButton.click();
 
-    await expect(this.newMeetingOprimizerButton).toBeVisible({ timeout: 3000 });
-    await expect(this.myStrarSyncButton).toBeVisible({ timeout: 3000 });
+    await expect(this.newMeetingOptimizerButton).toBeVisible({ timeout: 3000 });
+    await expect(this.myStratSyncButton).toBeVisible({ timeout: 3000 });
   }
 }
