@@ -46,9 +46,7 @@ test.describe("Sign-in: elements before email submission", () => {
     });
   });
 
-  test("Should navigate to Terms of Service page", async ({
-    page,
-  }) => {
+  test("Should navigate to Terms of Service page", async ({ page }) => {
     await test.step("Terms of Service link redirects to proper link", async () => {
       const termsOfServicePagePromise = page.waitForEvent("popup");
       await signinPage.termsOfServiceLink.click();
@@ -83,9 +81,7 @@ test.describe("Sign-in: elements before email submission", () => {
     });
   });
 
-  test("Should display 'Continue as guest' button", async ({
-    page,
-  }) => {
+  test("Should display 'Continue as guest' button", async ({ page }) => {
     await test.step("Verify 'Continue as guest' button is visible and active", async () => {
       await expect(signinPage.continueAsGuestButton).toBeVisible();
       await expect(signinPage.continueAsGuestButton).toBeEnabled();
@@ -113,7 +109,9 @@ test.describe("Sign-in: elements after email submission", () => {
     });
   });
 
-  test("Should display verification form after sending code", async ({ page }) => {
+  test("Should display verification form after sending code", async ({
+    page,
+  }) => {
     await test.step("Submit email", async () => {
       await signinPage.emailInput.fill(generateEmail());
       await signinPage.sendCodeButton.click();
@@ -124,7 +122,9 @@ test.describe("Sign-in: elements after email submission", () => {
       await expect(
         page.getByRole("heading", { name: "Enter verification code" }),
       ).toBeVisible();
-      await expect(page.getByText("We've sent a 6-digit code to")).toBeVisible();
+      await expect(
+        page.getByText("We've sent a 6-digit code to"),
+      ).toBeVisible();
       await expect(
         page.getByText("Verification Code", { exact: true }),
       ).toBeVisible();
@@ -161,7 +161,9 @@ test.describe("Sign-in: verification code flow", () => {
     signinPage = new SigninPage(page);
   });
 
-  test("Should show verification code after submitting email", async ({ page }) => {
+  test("Should show verification code after submitting email", async ({
+    page,
+  }) => {
     await test.step("Submit email and verify code input appears", async () => {
       await signinPage.emailInput.fill(generateEmail());
       await signinPage.sendCodeButton.click();
@@ -235,7 +237,7 @@ test.describe("Sign-in: logout", () => {
       await test.step("Open the app again and check if user is logged in", async () => {
         page = await context.newPage();
         chatPage = new ChatPage(page);
-        await page.goto(`${process.env.BASE_URL}/`);
+        await chatPage.navigateMainPage();
         await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
       });
 
@@ -254,7 +256,7 @@ test.describe("Sign-in: logout", () => {
       await test.step("Open the app again and check if user is logged out", async () => {
         page = await context.newPage();
         chatPage = new ChatPage(page);
-        await page.goto(`${process.env.BASE_URL}/`);
+        await chatPage.navigateMainPage();
         await expect(page).toHaveURL(`${process.env.BASE_URL}/signin`);
       });
     } finally {

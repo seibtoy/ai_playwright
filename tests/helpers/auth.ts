@@ -1,6 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 import { SigninPage } from "@/tests/pages/signin-page";
 
+type LoginTypes = "Admin" | "OrgAdmin" | "User" | "TestUser";
+
 export class Auth extends SigninPage {
   private async completeLogin(page: Page, userEmail: string) {
     const baseUrl = process.env.BASE_URL;
@@ -23,29 +25,32 @@ export class Auth extends SigninPage {
     }
   }
 
-  async loginAsMainUser(page: Page) {
-    const mainUserEmail = process.env.MAIN_USER_EMAIL;
-    if (!mainUserEmail) {
-      throw new Error("MAIN_USER_EMAIL environment variable is not set");
+  async login(page: Page, role: LoginTypes) {
+    let email: string;
+    switch (role) {
+      case "User":
+        email = process.env.MAIN_USER_EMAIL;
+        break;
+      case "TestUser":
+        email = process.env.TEST_USER_EMAIL;
+        break;
+      case "Admin":
+        email = process.env.ADMIN_USER_EMAIL;
+        break;
+      case "OrgAdmin":
+        email = process.env.ORG_ADMIN_USER_EMAIL;
+        break;
     }
-    const baseUrl = process.env.BASE_URL;
-    if (!baseUrl) {
-      throw new Error("BASE_URL environment variable is not set");
-    }
-    await this.completeLogin(page, mainUserEmail);
-    await page.waitForURL(`${baseUrl}/`);
-  }
 
-  async loginAsTestUser(page: Page) {
-    const testUserEmail = process.env.TEST_USER_EMAIL;
-    if (!testUserEmail) {
-      throw new Error("TEST_USER_EMAIL environment variable is not set");
+    if (!email) {
+      throw new Error(`${role} environment variable is not set`);
     }
     const baseUrl = process.env.BASE_URL;
     if (!baseUrl) {
       throw new Error("BASE_URL environment variable is not set");
     }
-    await this.completeLogin(page, testUserEmail);
+
+    await this.completeLogin(page, email);
     await page.waitForURL(`${baseUrl}/`);
   }
 }

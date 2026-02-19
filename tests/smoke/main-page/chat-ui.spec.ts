@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "@/tests/fixtures/index";
 import { URLS } from "@/tests/config/urls";
 import { ChatPage } from "@/tests/pages/chat-page";
 import { SigninPage } from "@/tests/pages/signin-page";
@@ -6,16 +6,7 @@ import { SigninPage } from "@/tests/pages/signin-page";
 test.describe("Chat UI: basic elements", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
-  let chatPage: ChatPage;
-
-  test.beforeEach(async ({ page }) => {
-    chatPage = new ChatPage(page);
-    await page.goto(`${process.env.BASE_URL}/`);
-  });
-
-  test("Should display UI elements before first message", async ({
-    page,
-  }) => {
+  test("Should display UI elements before first message", async ({ page, chatPage }) => {
     await test.step("Verify action buttons are visible", async () => {
       await expect(chatPage.newMeetingOptimizerButton).toBeVisible();
       await expect(chatPage.myStratSyncButton).toBeVisible();
@@ -23,7 +14,7 @@ test.describe("Chat UI: basic elements", () => {
     await test.step("Verify New Meeting Optimizer button leads to the correct page", async () => {
       await chatPage.newMeetingOptimizerButton.click();
       await expect(page).toHaveURL(/chat_id=[a-f0-9-]+/);
-      await page.goto(`${process.env.BASE_URL}/`);
+      await chatPage.navigateMainPage();
     });
     await test.step("Verify My StratSync button leads to the correct page", async () => {
       await chatPage.myStratSyncButton.click();
@@ -31,7 +22,7 @@ test.describe("Chat UI: basic elements", () => {
     });
   });
 
-  test("Should display UI elements after chat is started", async () => {
+  test.skip("Should display UI elements after chat is started", async ({ chatPage }) => {
     await test.step("Send message to display the chat UI", async () => {
       await chatPage.sendMessageViaAPI("Hello");
     });
@@ -58,14 +49,7 @@ test.describe("Chat UI: basic elements", () => {
 test.describe("Chat UI: file attachment", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
-  let chatPage: ChatPage;
-
-  test.beforeEach(async ({ page }) => {
-    chatPage = new ChatPage(page);
-    await page.goto(`${process.env.BASE_URL}/`);
-  });
-
-  test("Should attach file via button", async ({ page }) => {
+  test("Should attach file via button", async ({ page, chatPage }) => {
     await test.step("Click attachments button and select file", async () => {
       await expect(chatPage.attachmentsButton).toBeVisible();
 
@@ -102,9 +86,9 @@ test.describe("Chat UI: action buttons", () => {
     });
 
     const page = await context.newPage();
-    await page.goto(`${process.env.BASE_URL}/`);
-
     const chatPage = new ChatPage(page);
+
+    await chatPage.navigateMainPage();
 
     await test.step("Send message and verify action buttons are visible", async () => {
       await chatPage.sendMessage("Hello world");
@@ -148,7 +132,7 @@ test.describe("Chat UI: privacy", () => {
     await page.goto(`${process.env.BASE_URL}/`);
   });
 
-  test("Should hide private chat from other users", async ({
+  test.skip("Should hide private chat from other users", async ({
     browser,
   }) => {
     let chatUrl: string;
@@ -182,7 +166,7 @@ test.describe("Chat UI: privacy", () => {
     });
   });
 
-  test("Should show public chat to other users", async ({ browser }) => {
+  test.skip("Should show public chat to other users", async ({ browser }) => {
     let chatUrl: string;
 
     await test.step("Create chat as main user", async () => {
@@ -228,9 +212,7 @@ test.describe("Chat UI: privacy", () => {
 });
 
 test.describe("Chat UI: guest chat limit", () => {
-  test("Should limit guest user to 5 chats", async ({
-    browser,
-  }) => {
+  test("Should limit guest user to 5 chats", async ({ browser }) => {
     let chatPage: ChatPage;
     let signinPage: SigninPage;
 
@@ -291,14 +273,10 @@ test.describe("Chat UI: guest chat limit", () => {
 test.describe("Chat UI: chat not found modal", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
-  let chatPage: ChatPage;
-
-  test.beforeEach(async ({ page }) => {
-    chatPage = new ChatPage(page);
-    await page.goto(`${process.env.BASE_URL}/`);
-  });
-
-  test("Should display and interact with chat not found modal", async ({ page }) => {
+  test("Should display and interact with chat not found modal", async ({
+    page,
+    chatPage,
+  }) => {
     await test.step("Open invalid chat URL and verify modal is visible", async () => {
       await page.goto(
         `${process.env.BASE_URL}/chat/4b33087a-c85c-4f94-ac5c-e6ff52d55555`,

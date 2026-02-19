@@ -13,19 +13,22 @@ export default async function globalSetup() {
 
   const browser = await chromium.launch();
 
-  // MAIN USER
-  const mainContext = await browser.newContext();
-  const mainPage = await mainContext.newPage();
-  await new Auth(mainPage).loginAsMainUser(mainPage);
-  await mainContext.storageState({ path: URLS.STORAGE_STATE_MAIN_USER });
-  await mainContext.close();
+  const users = [
+    { role: "User", storagePath: URLS.STORAGE_STATE_MAIN_USER },
+    { role: "TestUser", storagePath: URLS.STORAGE_STATE_TEST_USER },
+    { role: "Admin", storagePath: URLS.STORAGE_STATE_ADMIN },
+    { role: "OrgAdmin", storagePath: URLS.STORAGE_STATE_ORG_ADMIN },
+  ] as const;
 
-  // TEST USER
-  const testContext = await browser.newContext();
-  const testPage = await testContext.newPage();
-  await new Auth(testPage).loginAsTestUser(testPage);
-  await testContext.storageState({ path: URLS.STORAGE_STATE_TEST_USER });
-  await testContext.close();
-
-  await browser.close();
+  try {
+    for (const { role, storagePath } of users) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await new Auth(page).login(page, role);
+      await context.storageState({ path: storagePath });
+      await context.close();
+    }
+  } finally {
+    await browser.close();
+  }
 }

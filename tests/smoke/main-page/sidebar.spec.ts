@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "@/tests/fixtures/index";
 import { URLS } from "@/tests/config/urls";
 import { generateEmail } from "@/tests/helpers/generate-email";
 import { ChatPage } from "@/tests/pages/chat-page";
@@ -7,24 +7,12 @@ import { SigninPage } from "@/tests/pages/signin-page";
 test.describe("Sidebar: elements without active chat", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
 
-  let chatPage: ChatPage;
-
-  test.beforeEach(async ({ page }) => {
-    chatPage = new ChatPage(page);
-    await page.goto(`${process.env.BASE_URL}/`);
-  });
-
-  test("Should display sidebar UI elements", async ({ page }) => {
+  test("Should display sidebar UI elements", async ({ page, chatPage }) => {
     await test.step("Check main sidebar links and texts", async () => {
       await expect(chatPage.logoLink).toBeVisible();
-      await expect(chatPage.meetingOptimizerLink).toBeVisible();
+      await expect(chatPage.alignmentOptimizerLink).toBeVisible();
       await expect(chatPage.stratSyncLink).toBeVisible();
-      await expect(chatPage.runBusinessLink).toBeVisible();
-    });
-
-    await test.step("Check AITP Memory block", async () => {
-      await expect(page.getByText("AITP Memory")).toBeVisible();
-      await expect(chatPage.importExternalMemoryButton).toBeVisible();
+      await expect(chatPage.promptLibraryLink).toBeVisible();
     });
 
     await test.step("Check if displayed user email is correct", async () => {
@@ -46,7 +34,7 @@ test.describe("Sidebar: elements without active chat", () => {
     });
   });
 
-  test("Should toggle sidebar menu correctly", async ({ page }) => {
+  test("Should toggle sidebar menu correctly", async ({ page, chatPage }) => {
     const sidebarState =
       await test.step("Get current sidebar state", async () => {
         return await page
@@ -80,15 +68,18 @@ test.describe("Sidebar: elements without active chat", () => {
 
   test("Should navigate to correct pages via sidebar links", async ({
     page,
+    chatPage,
   }) => {
     await test.step("Logo image redirects to the main page", async () => {
       await chatPage.logoLink.click();
       await expect(page).toHaveURL(`${process.env.BASE_URL}/`);
     });
 
-    await test.step("Meeting Optimizer button redirects to proper link", async () => {
-      await chatPage.meetingOptimizerLink.click();
-      await expect(page).toHaveURL(`${process.env.BASE_URL}/meeting-optimizer`);
+    await test.step("Alignment Optimizer link redirects to proper link", async () => {
+      await chatPage.alignmentOptimizerLink.click();
+      await expect(page).toHaveURL(
+        `${process.env.BASE_URL}/alignment-optimizer`,
+      );
     });
     await test.step("StratSync button redirects to proper link", async () => {
       await chatPage.stratSyncLink.click();
@@ -97,13 +88,14 @@ test.describe("Sidebar: elements without active chat", () => {
       );
     });
     await test.step("Run the Business button redirects to proper link", async () => {
-      await chatPage.runBusinessLink.click();
-      await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
+      await chatPage.promptLibraryLink.click();
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/prompt-library`);
     });
   });
 
   test("Should display and navigate user settings dropdown menu", async ({
     page,
+    chatPage,
   }) => {
     const theme = await chatPage.getTheme();
     const dropdownState =
@@ -170,14 +162,8 @@ test.describe("Sidebar: elements without active chat", () => {
 
 test.describe("Sidebar: elements with active chat", () => {
   test.use({ storageState: URLS.STORAGE_STATE_MAIN_USER });
-  let chatPage: ChatPage;
 
-  test.beforeEach(async ({ page }) => {
-    chatPage = new ChatPage(page);
-    await page.goto(`${process.env.BASE_URL}/`);
-  });
-
-  test("Should display created chats in the sidebar", async ({ page }) => {
+  test("Should display created chats in the sidebar", async ({ page, chatPage }) => {
     await test.step("Check that the sidebar is visible", async () => {
       await expect(chatPage.sidebar).toHaveAttribute("data-state", "open");
     });
@@ -201,9 +187,7 @@ test.describe("Sidebar: elements with active chat", () => {
         page.getByRole("menuitem", { name: "Rename" }),
       ).toBeVisible();
       await expect(page.getByRole("menuitem", { name: "Share" })).toBeVisible();
-      await expect(
-        page.getByRole("menuitem", { name: "Delete" }),
-      ).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: "Hide" })).toBeVisible();
     });
   });
 });
@@ -223,8 +207,13 @@ test.describe("Sidebar: guest user elements", () => {
 
   test("Should display guest sidebar UI elements", async ({ page }) => {
     await test.step("Verify guest-specific sidebar elements are visible", async () => {
-      await expect(chatPage.runBusinessLink).toBeVisible();
-      await expect(page.getByText("You are using the guest")).toBeVisible();
+      await expect(chatPage.promptLibraryLink).toBeVisible();
+      await expect(
+        page.locator("div").filter({
+          hasText:
+            /^You're using a guest account with up to 5 chats\. Sign in to unlock full access\.$/,
+        }),
+      ).toBeVisible();
       await expect(chatPage.createAccountButton).toBeVisible();
       await expect(chatPage.toggleThemeButton).toBeVisible();
     });
@@ -234,8 +223,8 @@ test.describe("Sidebar: guest user elements", () => {
     page,
   }) => {
     await test.step("Click 'Run the Business' and verify URL", async () => {
-      await chatPage.runBusinessLink.click();
-      await expect(page).toHaveURL(`${process.env.BASE_URL}/run-the-business`);
+      await chatPage.promptLibraryLink.click();
+      await expect(page).toHaveURL(`${process.env.BASE_URL}/prompt-library`);
     });
   });
 

@@ -8,20 +8,22 @@ export class Sidebar {
   readonly verificationCodeInputGroup: Locator;
 
   readonly logoLink: Locator;
-  readonly runBusinessLink: Locator;
-  readonly meetingOptimizerLink: Locator;
+  readonly promptLibraryLink: Locator;
+  readonly alignmentOptimizerLink: Locator;
   readonly stratSyncLink: Locator;
   readonly importExternalMemoryButton: Locator;
   readonly toggleButton: Locator;
   readonly sidebar: Locator;
   readonly settingsDropdown: Locator;
-  readonly adminMenuItem: Locator;
 
   readonly chatActionsDropdown: Locator;
   readonly deleteChatButton: Locator;
   readonly confirmDeleteChatButton: Locator;
 
   readonly moreChatDropdown: Locator;
+
+  readonly adminMenuItem: Locator;
+  readonly responseAggregation: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -37,8 +39,8 @@ export class Sidebar {
       name: "Verification code",
     });
 
-    this.meetingOptimizerLink = page.getByRole("link", {
-      name: "Meeting Optimizer",
+    this.alignmentOptimizerLink = page.getByRole("link", {
+      name: "Alignment Optimizer",
       exact: true,
     });
 
@@ -48,19 +50,15 @@ export class Sidebar {
     });
 
     this.logoLink = page.getByRole("link", { name: "Logo" });
-    this.runBusinessLink = page.getByRole("link", { name: "Run the Business" });
+    this.promptLibraryLink = page.getByRole("link", { name: "Prompt Library" });
     this.importExternalMemoryButton = page.getByRole("button", {
       name: "Import External Memory",
     });
-    this.toggleButton = page
-      .locator("header")
-      .getByRole("button")
-      .filter({ hasText: /^$/ });
+    this.toggleButton = page.locator("header").getByRole("button").first();
     this.sidebar = page.locator('div[data-slot="sidebar"]');
     this.settingsDropdown = page.locator(
       'button[data-sidebar="menu-button"][data-slot="dropdown-menu-trigger"]',
     );
-    this.adminMenuItem = page.getByRole("menuitem", { name: "Admin" });
     this.chatActionsDropdown = page.locator(
       "button[data-sidebar='menu-action'][data-slot='dropdown-menu-trigger']",
     );
@@ -69,6 +67,12 @@ export class Sidebar {
       name: "Continue",
     });
     this.moreChatDropdown = page.getByRole("menu", { name: "More" });
+
+    // admin only items
+    this.adminMenuItem = page.getByRole("menuitem", { name: "Admin" });
+    this.responseAggregation = page.getByRole("link", {
+      name: "Response Aggregation",
+    });
   }
 
   async getTheme(): Promise<string> {
@@ -79,6 +83,11 @@ export class Sidebar {
 
   async openSettings() {
     await this.settingsDropdown.click();
+  }
+
+  async openAdminPanel() {
+    await this.openSettings();
+    await this.adminMenuItem.click();
   }
 
   async clickMenuLinkAndAssertPopup(name: string, expectedUrl: string) {

@@ -43,7 +43,7 @@ export class ChatPage extends Sidebar {
     this.privateButton = page.getByRole("button", { name: "Private" });
     this.publicButton = page.getByRole("button", { name: "Public" });
     this.newMeetingOptimizerButton = page.getByRole("button", {
-      name: "New Meeting Optimizer",
+      name: "New Alignment Optimizer",
     });
     this.myStratSyncButton = page.getByRole("link", { name: "My StratSync" });
 
@@ -79,6 +79,10 @@ export class ChatPage extends Sidebar {
     this.refreshPageButtonInModal = page.getByRole("button", {
       name: "Refresh",
     });
+  }
+
+  async navigateMainPage() {
+    await this.page.goto(`${process.env.BASE_URL}/`);
   }
 
   async sendMessage(message: string) {
