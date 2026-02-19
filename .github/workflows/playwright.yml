@@ -156,6 +156,8 @@ jobs:
           AI_LEADERSHIP_URL: ${{ vars.AI_LEADERSHIP_URL }}
           MAIN_USER_EMAIL: ${{ vars.MAIN_USER_EMAIL }}
           TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+          ADMIN_USER_EMAIL: ${{ vars.ADMIN_USER_EMAIL }}
+          ORG_ADMIN_USER_EMAIL: ${{ vars.ORG_ADMIN_USER_EMAIL }}
           AUTH_CODE: ${{ secrets.AUTH_CODE }}
         run: |
           echo "🧪 Running SMOKE tests against: $BASE_URL"
@@ -168,6 +170,8 @@ jobs:
           AI_LEADERSHIP_URL: ${{ vars.AI_LEADERSHIP_URL }}
           MAIN_USER_EMAIL: ${{ vars.MAIN_USER_EMAIL }}
           TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+          ADMIN_USER_EMAIL: ${{ vars.ADMIN_USER_EMAIL }}
+          ORG_ADMIN_USER_EMAIL: ${{ vars.ORG_ADMIN_USER_EMAIL }}
           AUTH_CODE: ${{ secrets.AUTH_CODE }}
         run: |
           echo "🧪 Running FULL test suite against: $BASE_URL"
