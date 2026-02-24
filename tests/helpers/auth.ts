@@ -26,7 +26,7 @@ export class Auth extends SigninPage {
   }
 
   async login(page: Page, role: LoginTypes) {
-    let email: string;
+    let email: string | undefined;
     switch (role) {
       case "User":
         email = process.env.MAIN_USER_EMAIL;
